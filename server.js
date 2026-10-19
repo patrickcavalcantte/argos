@@ -177,7 +177,7 @@ const payloadNoticias = () => ({
   itens: naJanela(cache.itens).map(saida),
 });
 
-const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
+const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
 const estatico = (res, arquivo) => {
   res.writeHead(200, { 'Content-Type': TIPOS[path.extname(arquivo)] });
   res.end(fs.readFileSync(path.join(__dirname, arquivo)));
@@ -203,7 +203,7 @@ const servidor = http.createServer((req, res) => {
     return atualizar().then(() => json(req, res, { atualizadoEm: cache.atualizadoEm }));
   }
   if (url.pathname === '/' || url.pathname === '/index.html') return estatico(res, 'index.html');
-  if (url.pathname === '/xlsx.js') return estatico(res, 'xlsx.js');
+  if (['/xlsx.js', '/favicon.svg', '/apple-touch-icon.png', '/og-image.png'].includes(url.pathname)) return estatico(res, url.pathname.slice(1));
   res.writeHead(404).end('Não encontrado');
 });
 
