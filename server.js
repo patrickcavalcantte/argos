@@ -5,6 +5,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const zlib = require('zlib');
 const path = require('path');
+const { gerarXlsx } = require('./xlsx');
 
 const PORTA = process.env.PORT || 3737;
 const INTERVALO_MS = 24 * 60 * 60 * 1000;
@@ -118,13 +119,26 @@ async function atualizar() {
   const resultados = await Promise.all(
     feeds.map(async (f) => {
       try {
-        const r = await fetch(f.url, {
-          headers: { 'User-Agent': 'Mozilla/5.0 BuscadorSegurancaPublica/1.0', Accept: 'application/rss+xml, application/xml, text/xml, */*' },
-          signal: AbortSignal.timeout(15000),
-          redirect: 'follow',
-        });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        let itens = parsear(await r.text(), f);
+        let texto;
+        for (let tentativa = 1; ; tentativa++) {
+          try {
+            const r = await fetch(f.url, {
+              headers: { 'User-Agent': 'Mozilla/5.0 BuscadorSegurancaPublica/1.0', Accept: 'application/rss+xml, application/xml, text/xml, */*' },
+              signal: AbortSignal.timeout(15000),
+              redirect: 'follow',
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            texto = await r.text();
+            break;
+          } catch (e) {
+            // Só repete falhas transitórias (timeout, rede, 5xx/429); 403/404 não adianta insistir
+            const m = /^HTTP (\d+)/.exec(e.message);
+            const transitoria = !m || +m[1] >= 500 || +m[1] === 429;
+            if (tentativa >= 3 || !transitoria) throw e;
+            await new Promise((ok) => setTimeout(ok, 2000 * tentativa));
+          }
+        }
+        let itens = parsear(texto, f);
         const total = itens.length;
         if (f.filtrar) itens = itens.filter(ehSeguranca);
         return { itens, status: { id: f.id, nome: f.nome, grupo: f.grupo, ok: true, total, relevantes: itens.length } };
@@ -170,17 +184,27 @@ function noPeriodo(horas, de, ate) {
 const CAMPOS_TELA = ['titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'cats', 'arma', 'uf', 'morte', 'dup'];
 const paraTela = (i) => Object.fromEntries(CAMPOS_TELA.filter((c) => i[c] != null && !(Array.isArray(i[c]) && !i[c].length)).map((c) => [c, i[c]]));
 
+function valorCampo(i, c) {
+  if (c === 'categorias') return (i.cats || []).join('; ');
+  if (c === 'duplicata' || c === 'morte') return (c === 'duplicata' ? i.dup : i.morte) ? 'sim' : 'nao';
+  return i[c];
+}
+const nomeCampo = (c) => (c === 'coletadoEm' ? 'coletado_em' : c);
+
 function gerarCsv(horas, de, ate) {
-  const linhas = noPeriodo(horas, de, ate)
-    .map((i) => CAMPOS_CSV.map((c) => {
-      if (c === 'categorias') return celula((i.cats || []).join('; '));
-      if (c === 'duplicata') return celula(i.dup ? 'sim' : 'nao');
-      if (c === 'morte') return celula(i.morte ? 'sim' : 'nao');
-      return celula(i[c]);
-    }).join(','));
+  const linhas = noPeriodo(horas, de, ate).map((i) => CAMPOS_CSV.map((c) => celula(valorCampo(i, c))).join(','));
   // BOM para o Excel reconhecer UTF-8
-  const cabecalho = CAMPOS_CSV.map((c) => (c === 'coletadoEm' ? 'coletado_em' : c)).join(',');
-  return '\ufeff' + [cabecalho, ...linhas].join('\r\n');
+  return '﻿' + [CAMPOS_CSV.map(nomeCampo).join(','), ...linhas].join('\r\n');
+}
+
+function gerarPlanilha(horas, de, ate) {
+  const larguras = { data: 20, fonte: 22, grupo: 18, titulo: 70, resumo: 50, link: 45, categorias: 28, coletadoEm: 20 };
+  return gerarXlsx(
+    CAMPOS_CSV.map(nomeCampo),
+    noPeriodo(horas, de, ate).map((i) => CAMPOS_CSV.map((c) => valorCampo(i, c) ?? '')),
+    CAMPOS_CSV.indexOf('link'),
+    CAMPOS_CSV.map((c) => larguras[c] || 12)
+  );
 }
 
 const servidor = http.createServer((req, res) => {
@@ -189,6 +213,11 @@ const servidor = http.createServer((req, res) => {
     const nome = `argos-${new Date().toISOString().slice(0, 10)}.csv`;
     res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${nome}"` });
     return res.end(gerarCsv(+url.searchParams.get('horas') || 0, url.searchParams.get('de') || '', url.searchParams.get('ate') || ''));
+  }
+  if (url.pathname === '/api/exportar.xlsx') {
+    const nome = `argos-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    res.writeHead(200, { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${nome}"` });
+    return res.end(gerarPlanilha(+url.searchParams.get('horas') || 0, url.searchParams.get('de') || '', url.searchParams.get('ate') || ''));
   }
   if (url.pathname === '/api/noticias') {
     const q = url.searchParams;

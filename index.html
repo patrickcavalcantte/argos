@@ -95,6 +95,7 @@
     <label class="meta">até <input type="date" id="ate"></label>
     <button id="marcar">Marcar como lidos</button>
     <button id="csv" title="Baixar os dados classificados">Exportar CSV</button>
+    <button id="xlsx" title="Planilha Excel com links clicáveis">Exportar XLSX</button>
     <button id="atualizar">Atualizar</button>
   </header>
   <div id="lista"></div>
@@ -284,8 +285,10 @@ $('lista').addEventListener('click', (e) => {
 $('busca').oninput = (e) => { termo = e.target.value; lista(); };
 $('periodo').onchange = () => { $('de').value = ''; $('ate').value = ''; carregar(false); };
 $('de').onchange = $('ate').onchange = () => carregar(false);
-$('csv').onclick = () => { const de = $('de').value, ate = $('ate').value;
-  location.href = '/api/exportar.csv?' + (de || ate ? `de=${de}&ate=${ate}` : 'horas=' + Math.round((+$('periodo').value || 0) / 3600000)); };
+const exportar = (ext) => { const de = $('de').value, ate = $('ate').value;
+  location.href = `/api/exportar.${ext}?` + (de || ate ? `de=${de}&ate=${ate}` : 'horas=' + Math.round((+$('periodo').value || 0) / 3600000)); };
+$('csv').onclick = () => exportar('csv');
+$('xlsx').onclick = () => exportar('xlsx');
 $('atualizar').onclick = () => carregar(true);
 $('marcar').onclick = () => { visiveis().forEach((i) => lidos.add(i.id)); guardar('lidos', [...lidos]); lista(); };
 $('lista').onclick = (e) => {

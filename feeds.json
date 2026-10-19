@@ -99,8 +99,9 @@
     "id": "revista-forum",
     "nome": "Revista Fórum",
     "grupo": "Mídia independente",
-    "url": "https://revistaforum.com.br/feed/",
-    "filtrar": true
+    "url": "https://news.google.com/rss/search?q=site%3Arevistaforum.com.br%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": true,
+    "google": true
   },
   {
     "id": "carta-capital",
