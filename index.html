@@ -297,7 +297,9 @@ function lista() {
   }
   if (itens.length > LIMITE) html += `<div class="vazio">Mostrando as ${LIMITE} mais recentes de ${itens.length}. Use a busca, o período ou os filtros para refinar, ou exporte o CSV com tudo.</div>`;
   html = (Object.keys(extra).length ? `<div class="dia">Filtros: ${chips()}</div>` : '') + html;
-  $('lista').innerHTML = html || '<div class="vazio">Nenhuma notícia encontrada com esses filtros.</div>';
+  const inicio = dados.itens.reduce((m, i) => (i.data && i.data < m ? i.data : m), '9');
+  const antigo = $('ate').value && inicio.slice(0, 10) > $('ate').value; // período anterior ao que ainda está no ar
+  $('lista').innerHTML = html || `<div class="vazio">${antigo ? `As notícias desse período já saíram do ar: ficam disponíveis por ${dados.janelaDias || 30} dias. A contagem de casos continua no histórico mensal da aba Análise.` : 'Nenhuma notícia encontrada com esses filtros.'}</div>`;
   const nomes = { todos: 'Todos os posts', naolidos: 'Não lidos', favoritos: 'Favoritados' };
   $('titulo').textContent = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? (dados.status.find((s) => s.id === filtro.valor)?.nome ?? '') : nomes[filtro.tipo];
   meta(itens.length);
@@ -333,6 +335,14 @@ $('analise').onclick = (e) => {
   const b = e.target.closest('[data-filtro]');
   if (!b) return;
   const { filtro: k, valor } = b.dataset;
+  if (k === 'mes') { // barra do histórico mensal: mostra as notícias do mês, na série escolhida no card
+    const [ano, mes] = valor.split('-'), ultimo = new Date(+ano, +mes, 0).getDate();
+    $('de').value = `${valor}-01`; $('ate').value = `${valor}-${String(ultimo).padStart(2, '0')}`;
+    const [tipo, ...resto] = serie.split(':'), v = resto.join(':');
+    extra = tipo === 'cat' ? { cat: v } : {};
+    if (tipo === 'uf' && [...$('uf').options].some((o) => o.value === v)) { ufSel = v; $('uf').value = v; }
+    visao = 'lista'; lista(); return;
+  }
   if (k === 'uf') { ufSel = valor; $('uf').value = valor; extra = {}; visao = 'lista'; lista(); }
   else if (['cat', 'arma'].includes(k)) { extra = { [k]: valor }; visao = 'lista'; lista(); }
 };
