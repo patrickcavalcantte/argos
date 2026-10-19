@@ -27,6 +27,8 @@
       if (i.uf) ufs[i.uf] = (ufs[i.uf] || 0) + 1;
       if (i.data) { const d = i.data.slice(0, 10); dias[d] = (dias[d] || 0) + 1; }
     }
+    const cobertura = {}; // veículos regionais (grupos "RJ · Região"): onde a imprensa local registrou o caso
+    for (const i of casos) if (/^RJ · /.test(i.grupo || '')) cobertura[i.grupo.slice(5)] = (cobertura[i.grupo.slice(5)] || 0) + 1;
     for (const i of todas) fontes[i.fonte || '—'] = (fontes[i.fonte || '—'] || 0) + 1;
     for (const i of mortes) { const a = i.arma || 'Não informada'; armas[a] = (armas[a] || 0) + 1; }
     const comArma = mortes.filter((i) => i.arma).length;
@@ -110,7 +112,8 @@ ${casos.length ? `<ul class="resumo">${resumo.map((r) => `<li>${r}</li>`).join('
 <div class="duas">
   <div><b>Casos por tipo de ocorrência</b><div class="nota">Um caso pode ter mais de um tipo.</div>${barras(ord(cats), 12)}</div>
   <div><b>Mortes por meio utilizado</b><div class="nota">Conforme descrito no texto da notícia.</div>${barras(ord(armas), 8)}</div>
-  <div><b>Casos por região</b>${barras(ord(regs), 10)}</div>
+  <div><b>Casos por região do país</b>${barras(ord(regs), 10)}</div>
+  ${Object.keys(cobertura).length ? `<div><b>Casos noticiados por veículos regionais do RJ</b><div class="nota">Região do veículo que publicou, não necessariamente do fato.</div>${barras(ord(cobertura), 8)}</div>` : ''}
   <div><b>Casos por dia</b>${barras(Object.entries(dias).sort().reverse().map(([d, n]) => [new Date(d + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }), n]), 10)}</div>
   ${Object.keys(ufs).length > 1 ? `<div><b>Casos por estado</b>${barras(ord(ufs), 10)}</div>` : ''}
   <div><b>Veículos com mais notícias</b>${barras(ord(fontes), 10)}</div>
