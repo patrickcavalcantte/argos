@@ -42,7 +42,9 @@
   /* Navegação */
   #nav { background: var(--painel); border-right: 1px solid var(--borda); display: flex; flex-direction: column; min-height: 0; }
   #nav .topo { padding: 16px 16px 10px; }
-  #nav h1 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.3px; color: var(--destaque); }
+  #nav h1 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.3px; }
+  #nav h1 a { color: var(--destaque); text-decoration: none; }
+  #nav h1 a:hover { opacity: .8; }
   .busca { width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); font: inherit; }
   #menu { flex: 1; overflow-y: auto; padding: 4px 8px 12px; }
   .item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
@@ -61,6 +63,11 @@
   /* Lista */
   #coluna { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--borda); }
   body.analise #coluna { border-right: 0; }
+  .migalha { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 4px; padding: 10px 16px 0; font-size: 12px; color: var(--suave); }
+  .migalha a { color: var(--suave); text-decoration: none; cursor: pointer; }
+  .migalha a:hover { color: var(--destaque); text-decoration: underline; }
+  .migalha b { color: var(--texto); font-weight: 600; }
+  .migalha i { font-style: normal; opacity: .6; }
   .cab { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; }
   .cab .tit-col { flex: 1; min-width: 0; }
   .cab h2 { margin: 0; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -158,7 +165,7 @@
 <body>
 <aside id="nav">
   <div class="topo">
-    <h1>Argos</h1>
+    <h1><a href="./" id="logo" title="Voltar para a home">Argos</a></h1>
     <input class="busca" id="busca" type="search" placeholder="Buscar nas notícias…">
   </div>
   <div id="menu"></div>
@@ -168,6 +175,7 @@
   </div>
 </aside>
 <section id="coluna">
+  <nav class="migalha" id="migalha" aria-label="Você está em"></nav>
   <div class="cab">
     <button id="abrirmenu" class="so-mobile" title="Menu">☰</button>
     <div class="tit-col"><h2 id="titulo">Todos os posts</h2><div class="meta" id="meta"></div></div>
@@ -407,7 +415,7 @@ function lista() {
   $('aba-lista').classList.toggle('on', visao === 'lista');
   $('aba-analise').classList.toggle('on', visao === 'analise');
   $('marcar').style.display = visao === 'lista' ? '' : 'none';
-  badgeFiltros();
+  badgeFiltros(); migalha();
   if (visao === 'analise') { analise(); menu(); return meta(); }
   const itens = paraLista();
   let html = '';
@@ -433,6 +441,39 @@ function lista() {
   menu();
   if (sel && !itens.some((i) => i.id === sel)) renderLeitor(); // mantém o artigo aberto mesmo fora da lista
 }
+
+// ---- Migalha de pão (Home › Notícias › …) e volta à home
+function migalha() {
+  const partes = [['Home', 'home']];
+  if (visao === 'analise') partes.push(['Notícias', 'noticias'], ['Análise']);
+  else {
+    const g = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? dados.status.find((x) => x.id === filtro.valor)?.grupo : null;
+    const f = filtro.tipo === 'fonte' ? dados.status.find((x) => x.id === filtro.valor)?.nome : null;
+    const nomes = { naolidos: 'Não lidos', favoritos: 'Favoritados' };
+    partes.push(['Notícias', g || nomes[filtro.tipo] ? 'noticias' : null]);
+    if (nomes[filtro.tipo]) partes.push([nomes[filtro.tipo]]);
+    if (g) partes.push([g, f ? 'grupo' : null]);
+    if (f) partes.push([f]);
+  }
+  $('migalha').innerHTML = partes.map(([nome, acao], k) => (k === partes.length - 1 || !acao ? `<b>${esc(nome)}</b>` : `<a data-ir="${acao}">${esc(nome)}</a>`)).join(' <i>›</i> '); // o último item é onde você está
+}
+function irHome() {
+  filtro = { tipo: 'todos', valor: null }; termo = ''; $('busca').value = ''; extra = {}; ufSel = ''; ufGrafico = '';
+  $('periodo').value = '604800000'; $('de').value = ''; $('ate').value = '';
+  visao = 'lista'; sel = null; abertos.clear();
+  document.body.classList.remove('lendo', 'menu-aberto');
+  renderLeitor(); lista();
+  $('lista').scrollTop = 0;
+}
+$('logo').onclick = (e) => { e.preventDefault(); irHome(); };
+$('migalha').onclick = (e) => {
+  const a = e.target.closest('[data-ir]'); if (!a) return;
+  if (a.dataset.ir === 'home') return irHome();
+  visao = 'lista';
+  if (a.dataset.ir === 'noticias') filtro = { tipo: 'todos', valor: null };
+  if (a.dataset.ir === 'grupo') filtro = { tipo: 'grupo', valor: dados.status.find((x) => x.id === filtro.valor)?.grupo };
+  lista();
+};
 
 // ---- Leitor
 let sel = null;
