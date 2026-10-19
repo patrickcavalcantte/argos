@@ -1,0 +1,230 @@
+[
+  {
+    "id": "g1-rj",
+    "nome": "g1 Rio de Janeiro",
+    "grupo": "Grandes portais",
+    "url": "https://g1.globo.com/rss/g1/rio-de-janeiro/",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "g1-sp",
+    "nome": "g1 São Paulo",
+    "grupo": "Grandes portais",
+    "url": "https://g1.globo.com/rss/g1/sao-paulo/",
+    "filtrar": true,
+    "uf": "SP"
+  },
+  {
+    "id": "g1-mg",
+    "nome": "g1 Minas Gerais",
+    "grupo": "Grandes portais",
+    "url": "https://g1.globo.com/rss/g1/minas-gerais/",
+    "filtrar": true,
+    "uf": "MG"
+  },
+  {
+    "id": "g1-bahia",
+    "nome": "g1 Bahia",
+    "grupo": "Grandes portais",
+    "url": "https://g1.globo.com/rss/g1/bahia/",
+    "filtrar": true,
+    "uf": "BA"
+  },
+  {
+    "id": "g1-pe",
+    "nome": "g1 Pernambuco",
+    "grupo": "Grandes portais",
+    "url": "https://g1.globo.com/rss/g1/pernambuco/",
+    "filtrar": true,
+    "uf": "PE"
+  },
+  {
+    "id": "g1-ultimas",
+    "nome": "g1 Últimas",
+    "grupo": "Grandes portais",
+    "url": "https://g1.globo.com/rss/g1/",
+    "filtrar": true
+  },
+  {
+    "id": "agencia-brasil",
+    "nome": "Agência Brasil",
+    "grupo": "Grandes portais",
+    "url": "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml",
+    "filtrar": true
+  },
+  {
+    "id": "cnn-brasil",
+    "nome": "CNN Brasil",
+    "grupo": "Grandes portais",
+    "url": "https://www.cnnbrasil.com.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "metropoles",
+    "nome": "Metrópoles",
+    "grupo": "Grandes portais",
+    "url": "https://www.metropoles.com/feed",
+    "filtrar": true
+  },
+  {
+    "id": "poder360",
+    "nome": "Poder360",
+    "grupo": "Grandes portais",
+    "url": "https://www.poder360.com.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "uol",
+    "nome": "UOL Notícias",
+    "grupo": "Grandes portais",
+    "url": "https://rss.uol.com.br/feed/noticias.xml",
+    "filtrar": true
+  },
+  {
+    "id": "midia-ninja",
+    "nome": "Mídia Ninja",
+    "grupo": "Mídia independente",
+    "url": "https://midianinja.org/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "brasil-de-fato",
+    "nome": "Brasil de Fato",
+    "grupo": "Mídia independente",
+    "url": "https://www.brasildefato.com.br/feed",
+    "filtrar": true
+  },
+  {
+    "id": "revista-forum",
+    "nome": "Revista Fórum",
+    "grupo": "Mídia independente",
+    "url": "https://revistaforum.com.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "carta-capital",
+    "nome": "CartaCapital",
+    "grupo": "Mídia independente",
+    "url": "https://www.cartacapital.com.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "brasil247",
+    "nome": "Brasil 247",
+    "grupo": "Mídia independente",
+    "url": "https://www.brasil247.com/feed",
+    "filtrar": true
+  },
+  {
+    "id": "intercept",
+    "nome": "The Intercept Brasil",
+    "grupo": "Mídia independente",
+    "url": "https://theintercept.com/brasil/feed/?lang=pt",
+    "filtrar": true
+  },
+  {
+    "id": "opera-mundi",
+    "nome": "Opera Mundi",
+    "grupo": "Mídia independente",
+    "url": "https://operamundi.uol.com.br/feed",
+    "filtrar": true
+  },
+  {
+    "id": "jacobin",
+    "nome": "Jacobin Brasil",
+    "grupo": "Mídia independente",
+    "url": "https://jacobin.com.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "apublica",
+    "nome": "Agência Pública",
+    "grupo": "Mídia independente",
+    "url": "https://apublica.org/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "ponte",
+    "nome": "Ponte Jornalismo",
+    "grupo": "Mídia independente",
+    "url": "https://ponte.org/feed/",
+    "filtrar": false
+  },
+  {
+    "id": "diplomatique",
+    "nome": "Le Monde Diplomatique Brasil",
+    "grupo": "Mídia independente",
+    "url": "https://diplomatique.org.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "dcm",
+    "nome": "Diário do Centro do Mundo",
+    "grupo": "Mídia independente",
+    "url": "https://www.diariodocentrodomundo.com.br/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "pragmatismo",
+    "nome": "Pragmatismo Político",
+    "grupo": "Mídia independente",
+    "url": "https://www.pragmatismopolitico.com.br/feed",
+    "filtrar": true
+  },
+  {
+    "id": "outras-palavras",
+    "nome": "Outras Palavras",
+    "grupo": "Mídia independente",
+    "url": "https://outraspalavras.net/feed/",
+    "filtrar": true
+  },
+  {
+    "id": "gn-seguranca",
+    "nome": "Google Notícias · segurança pública",
+    "grupo": "Google Notícias",
+    "url": "https://news.google.com/rss/search?q=seguran%C3%A7a%20p%C3%BAblica%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "google": true
+  },
+  {
+    "id": "gn-homicidio",
+    "nome": "Google Notícias · homicídio",
+    "grupo": "Google Notícias",
+    "url": "https://news.google.com/rss/search?q=homic%C3%ADdio%20OR%20assassinato%20OR%20chacina%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "google": true
+  },
+  {
+    "id": "gn-policial",
+    "nome": "Google Notícias · operação policial",
+    "grupo": "Google Notícias",
+    "url": "https://news.google.com/rss/search?q=opera%C3%A7%C3%A3o%20policial%20OR%20tiroteio%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "google": true
+  },
+  {
+    "id": "gn-trafico",
+    "nome": "Google Notícias · tráfico de drogas",
+    "grupo": "Google Notícias",
+    "url": "https://news.google.com/rss/search?q=tr%C3%A1fico%20de%20drogas%20OR%20fac%C3%A7%C3%A3o%20criminosa%20OR%20mil%C3%ADcia%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "google": true
+  },
+  {
+    "id": "gn-prisoes",
+    "nome": "Google Notícias · preso",
+    "grupo": "Google Notícias",
+    "url": "https://news.google.com/rss/search?q=preso%20OR%20presos%20OR%20foragido%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "google": true
+  },
+  {
+    "id": "gn-roubo",
+    "nome": "Google Notícias · roubo",
+    "grupo": "Google Notícias",
+    "url": "https://news.google.com/rss/search?q=roubo%20OR%20assalto%20OR%20latroc%C3%ADnio%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "google": true
+  }
+]

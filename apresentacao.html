@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argos — apresentação</title>
+<style>
+  :root {
+    --bg: #fbfaf8; --card: #ffffff; --texto: #1b1f24; --suave: #5f6a76; --borda: #e4e1db;
+    --destaque: #c0392b; --destaque-fundo: #fbeae8; --ok: #1f7a4d; --alerta: #b7791f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171b; --card: #1c2025; --texto: #e8ebef; --suave: #98a2ae; --borda: #2c323a; --destaque: #ef6b5c; --destaque-fundo: #2c1f1d; --ok: #4cc38a; --alerta: #e0b050; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--texto); font: 18px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  section { min-height: 100vh; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: center; padding: 56px max(24px, 8vw); position: relative; }
+  .conteudo { max-width: 1040px; width: 100%; margin: 0 auto; }
+  h1 { font-size: clamp(42px, 8vw, 88px); line-height: 1; margin: 0 0 16px; letter-spacing: -2px; }
+  h1 span, h2 em { color: var(--destaque); font-style: normal; }
+  h2 { font-size: clamp(28px, 4.4vw, 46px); line-height: 1.12; margin: 0 0 12px; letter-spacing: -1px; }
+  .rotulo { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--destaque); font-weight: 700; margin-bottom: 14px; }
+  .lead { font-size: clamp(18px, 2.2vw, 24px); color: var(--suave); max-width: 780px; margin: 0 0 28px; }
+  .grade { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: 16px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 19px; }
+  .card p { margin: 0; color: var(--suave); font-size: 16px; }
+  .card .n { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--destaque); color: #fff; font-weight: 700; margin-bottom: 12px; }
+  .tech { display: inline-block; font: 600 13px/1 ui-monospace, Consolas, monospace; background: var(--destaque-fundo); color: var(--destaque); border-radius: 6px; padding: 5px 8px; margin-bottom: 10px; }
+  .fluxo { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+  .fluxo .card { flex: 1 1 170px; text-align: center; }
+  .seta { align-self: center; color: var(--suave); font-size: 26px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--borda); border-radius: 16px; overflow: hidden; font-size: 16px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+  th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+  tr:last-child td { border-bottom: 0; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+  .med { background: color-mix(in srgb, var(--alerta) 18%, transparent); color: var(--alerta); }
+  .ruim { background: var(--destaque-fundo); color: var(--destaque); }
+  .aviso { border-left: 4px solid var(--destaque); background: var(--destaque-fundo); padding: 14px 18px; border-radius: 0 12px 12px 0; margin-top: 22px; font-size: 16px; }
+  ul.lista { padding-left: 20px; margin: 0; } ul.lista li { margin: 8px 0; }
+  .mini { display: grid; grid-template-columns: 120px 1fr 34px; gap: 8px; align-items: center; font-size: 14px; color: var(--suave); margin: 5px 0; }
+  .mini i { display: block; height: 12px; background: var(--destaque); border-radius: 4px; }
+  .mini .t { background: var(--borda); border-radius: 4px; }
+  .rodape { position: fixed; right: 20px; bottom: 14px; font-size: 13px; color: var(--suave); background: var(--bg); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--borda); }
+  .dica { color: var(--suave); font-size: 14px; margin-top: 28px; }
+  @page { size: 297mm 190mm; margin: 0; }
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html { scroll-snap-type: none; }
+    body { font-size: 15px; }
+    section { min-height: 0; height: 190mm; padding: 14mm 18mm; overflow: hidden; break-after: page; break-inside: avoid; }
+    section:last-of-type { break-after: auto; }
+    h1 { font-size: 64px; } h2 { font-size: 32px; } .lead { font-size: 17px; margin-bottom: 16px; }
+    .card { padding: 14px; } .card p, td, th { font-size: 13px; } .card h3 { font-size: 16px; }
+    .rodape, .dica:first-of-type { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Segurança pública · notícias</div>
+    <h1><span>Argos</span></h1>
+    <p class="lead">Uma ferramenta que lê dezenas de sites de notícia por você, separa o que é segurança pública e transforma isso em listas, gráficos e planilhas.</p>
+    <p class="dica">Use as setas ← → ou ↑ ↓ do teclado, ou role a página.</p>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">O problema</div>
+    <h2>Acompanhar segurança pública é <em>trabalhoso</em></h2>
+    <p class="lead">As notícias estão espalhadas por dezenas de portais, em estilos e linhas editoriais diferentes. Ninguém consegue abrir todos os dias, e menos ainda comparar números.</p>
+    <div class="grade">
+      <div class="card"><h3>Muitas fontes</h3><p>Grandes portais, jornais regionais, mídia independente. Cada um com seu site.</p></div>
+      <div class="card"><h3>Muito ruído</h3><p>Uma notícia sobre crime aparece no meio de política, esporte e economia.</p></div>
+      <div class="card"><h3>Pouca visão de conjunto</h3><p>Onde há mais assaltos? Quais crimes mais aparecem? Sem organizar, não dá para saber.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">A solução</div>
+    <h2>O Argos faz o trabalho <em>repetitivo</em></h2>
+    <p class="lead">Ele funciona como um assistente que, todo dia, passa por todas as fontes, guarda só o que interessa e deixa tudo organizado.</p>
+    <div class="fluxo">
+      <div class="card"><div class="n">1</div><h3>Coleta</h3><p>Busca as notícias novas em 31 fontes.</p></div>
+      <div class="seta">→</div>
+      <div class="card"><div class="n">2</div><h3>Filtra</h3><p>Descarta o que não é segurança pública.</p></div>
+      <div class="seta">→</div>
+      <div class="card"><div class="n">3</div><h3>Classifica</h3><p>Identifica o tipo de crime, a arma e o estado.</p></div>
+      <div class="seta">→</div>
+      <div class="card"><div class="n">4</div><h3>Mostra</h3><p>Lista, gráficos e planilha para baixar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Na prática</div>
+    <h2>O que a pessoa <em>vê e faz</em></h2>
+    <div class="grade">
+      <div class="card"><h3>Lista de notícias</h3><p>Como um leitor de notícias: não lidos, favoritos, busca por palavra e filtro por período.</p></div>
+      <div class="card"><h3>Fontes por grupo</h3><p>Grandes portais, mídia independente e buscas do Google Notícias, cada grupo separado.</p></div>
+      <div class="card"><h3>Aba de Análise</h3><p>Gráficos de tipos de crime, mortes por tipo de arma e estados e regiões com mais ocorrências.</p></div>
+      <div class="card"><h3>Exportar planilha</h3><p>Baixa tudo em CSV para analisar no Excel ou em outra ferramenta.</p></div>
+    </div>
+    <div style="margin-top:28px;max-width:560px" class="card">
+      <h3>Exemplo do que a análise mostra</h3>
+      <p style="margin-bottom:12px">Ilustração do formato do gráfico. Os números abaixo são fictícios.</p>
+      <div class="mini"><span>Homicídio</span><span class="t"><i style="width:90%"></i></span><span>—</span></div>
+      <div class="mini"><span>Roubo / assalto</span><span class="t"><i style="width:60%"></i></span><span>—</span></div>
+      <div class="mini"><span>Tráfico</span><span class="t"><i style="width:45%"></i></span><span>—</span></div>
+      <div class="mini"><span>Furto</span><span class="t"><i style="width:25%"></i></span><span>—</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">De onde vêm as notícias</div>
+    <h2>31 fontes, <em>todas públicas</em></h2>
+    <p class="lead">O Argos lê os feeds RSS: um “canal de notícias” que os próprios sites oferecem de graça para quem quiser acompanhar. Não há cadastro, chave nem raspagem de páginas.</p>
+    <div class="grade">
+      <div class="card"><h3>Grandes portais</h3><p>g1 (seis regiões), Agência Brasil, CNN Brasil, Metrópoles, Poder360 e UOL.</p></div>
+      <div class="card"><h3>Mídia independente</h3><p>Mídia Ninja, Brasil de Fato, Ponte Jornalismo, Agência Pública, The Intercept Brasil, CartaCapital e outros.</p></div>
+      <div class="card"><h3>Google Notícias</h3><p>Seis buscas por tema (homicídio, roubo, tráfico etc.) que juntam centenas de veículos pequenos e regionais.</p></div>
+    </div>
+    <p class="dica">O Argos guarda o título, o resumo e o link. Para ler a matéria, abre o site do veículo original.</p>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Tecnologias</div>
+    <h2>Feito com tecnologia <em>simples e aberta</em></h2>
+    <p class="lead">Nenhuma assinatura, nenhuma biblioteca de terceiros, nenhuma chave de API. Só ferramentas gratuitas que já vêm prontas.</p>
+    <div class="grade">
+      <div class="card"><span class="tech">Node.js</span><h3>O “motor”</h3><p>Programa que roda no servidor, busca as notícias nos sites, guarda o histórico e entrega a página. Usa só recursos nativos.</p></div>
+      <div class="card"><span class="tech">Python</span><h3>O “analista”</h3><p>Lê cada notícia e identifica o tipo de crime, a arma e o local. Também junta notícias repetidas do mesmo caso.</p></div>
+      <div class="card"><span class="tech">HTML · CSS · JavaScript</span><h3>A “tela”</h3><p>A página que a pessoa usa no navegador, com lista, filtros e gráficos. Funciona em computador e celular.</p></div>
+      <div class="card"><span class="tech">RSS</span><h3>Os “canais”</h3><p>Formato aberto que os sites usam para publicar suas últimas notícias.</p></div>
+      <div class="card"><span class="tech">IBGE</span><h3>A lista de cidades</h3><p>Os 5.571 municípios brasileiros, da base oficial, ajudam a descobrir em que estado cada notícia aconteceu.</p></div>
+      <div class="card"><span class="tech">JSON · CSV</span><h3>Os “arquivos”</h3><p>O histórico fica num arquivo no disco. A planilha CSV abre no Excel e em ferramentas de análise de dados.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Como ele “entende” as notícias</div>
+    <h2>Regras claras, <em>sem caixa-preta</em></h2>
+    <p class="lead">Hoje a classificação funciona por regras e palavras-chave, que qualquer pessoa pode ler e ajustar. Por exemplo: “facada” indica arma branca, “baleado” indica arma de fogo, e a cidade citada indica o estado.</p>
+    <div class="grade">
+      <div class="card"><h3>Vantagens</h3><ul class="lista"><li>Gratuito e rápido</li><li>Transparente: dá para saber por que cada notícia foi classificada assim</li><li>Funciona sem internet para a análise</li></ul></div>
+      <div class="card"><h3>Limites</h3><ul class="lista"><li>É uma estimativa, não um dado oficial</li><li>Cerca de um terço das notícias fica sem estado identificado</li><li>A manchete raramente diz qual arma foi usada</li><li>Pode errar em frases ambíguas</li></ul></div>
+    </div>
+    <div class="aviso"><b>Importante:</b> os gráficos mostram o que a imprensa noticiou, não o que aconteceu de fato. Não substituem estatísticas oficiais de segurança.</div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Onde hospedar</div>
+    <h2>O que o Argos <em>precisa</em> para funcionar</h2>
+    <p class="lead">Hoje ele roda no computador de quem o criou. Para ficar disponível para outras pessoas, precisa de um lugar que atenda a quatro requisitos:</p>
+    <div class="grade">
+      <div class="card"><h3>Node.js e Python</h3><p>Node 18 ou mais novo e Python 3, ambos gratuitos e comuns em qualquer servidor.</p></div>
+      <div class="card"><h3>Ficar ligado</h3><p>Precisa de um processo sempre ativo para coletar as notícias uma vez por dia.</p></div>
+      <div class="card"><h3>Disco que não apaga</h3><p>O histórico fica num arquivo. Se o disco for descartado, a memória do sistema se perde.</p></div>
+      <div class="card"><h3>Acesso à internet</h3><p>Para buscar as notícias nos sites das fontes.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Onde hospedar</div>
+    <h2>Opções, da mais simples à <em>mais trabalhosa</em></h2>
+    <table>
+      <tr><th>Opção</th><th>Serve?</th><th>Observação</th></tr>
+      <tr><td><b>O próprio computador</b></td><td><span class="tag med">Para testes</span></td><td>Funciona como está, mas só enquanto o computador estiver ligado e só você acessa.</td></tr>
+      <tr><td><b>Servidor virtual (VPS)</b><br><small>ex.: DigitalOcean, Hostinger, Contabo, Oracle Cloud</small></td><td><span class="tag ok">Recomendado</span></td><td>Um computador alugado, sempre ligado. Roda o Argos como está, com histórico em disco. Exige instalar Node e Python uma vez.</td></tr>
+      <tr><td><b>Plataforma de aplicativos</b><br><small>ex.: Render, Railway, Fly.io</small></td><td><span class="tag ok">Boa opção</span></td><td>Mais fácil que o VPS: sobe o código e a plataforma cuida do resto. É preciso contratar um disco persistente para o histórico.</td></tr>
+      <tr><td><b>Vercel / Netlify</b></td><td><span class="tag med">Exige adaptação</span></td><td>Não mantém um programa ligado nem guarda arquivos. O Argos teria que virar funções sob demanda e o histórico ir para um banco de dados externo, como o Supabase.</td></tr>
+      <tr><td><b>Hospedagem de site comum</b><br><small>(só HTML/PHP)</small></td><td><span class="tag ruim">Não serve</span></td><td>Não roda Node nem Python.</td></tr>
+    </table>
+    <div class="aviso"><b>Segurança:</b> o Argos ainda não tem login. Se for publicado na internet, é preciso proteger o acesso com senha antes, ou deixá-lo disponível só na rede interna da organização.</div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Para o analista de dados</div>
+    <h2>Dados prontos para <em>outras ferramentas</em></h2>
+    <p class="lead">A cada dia, o Argos acrescenta as notícias novas ao histórico, sem repetir. Com o tempo, vira uma base para análise de semanas e meses.</p>
+    <div class="grade">
+      <div class="card"><h3>Planilha CSV</h3><p>Data, fonte, título, link, estado, região, tipos de crime, arma, se envolve morte e se é repetição de outro caso.</p></div>
+      <div class="card"><h3>Abre em qualquer lugar</h3><p>Excel, Google Planilhas, Python (pandas), R, Power BI.</p></div>
+      <div class="card"><h3>Reclassificação</h3><p>Quando as regras melhoram, o histórico inteiro é reclassificado automaticamente.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="conteudo">
+    <div class="rotulo">Próximos passos</div>
+    <h2>Para <em>evoluir</em></h2>
+    <div class="grade">
+      <div class="card"><h3>Inteligência artificial</h3><p>Usar um modelo como o DeepSeek ou o Claude para classificar melhor, entender contexto e achar o local. Tem custo por uso.</p></div>
+      <div class="card"><h3>Medir a precisão</h3><p>Conferir uma amostra de notícias na mão para saber, com número, o quanto da classificação se pode confiar.</p></div>
+      <div class="card"><h3>Mais fontes e filtros</h3><p>Secretarias de segurança, Polícia Federal, mais jornais regionais, filtros por estado e município.</p></div>
+      <div class="card"><h3>Mapa e alertas</h3><p>Mapa de ocorrências e aviso quando surgir um tipo de notícia que interesse.</p></div>
+    </div>
+    <p class="dica" style="margin-top:36px"><b>Argos</b> — na mitologia grega, o gigante de cem olhos que nunca dormia inteiro.</p>
+  </div>
+</section>
+
+<div class="rodape" id="contador">1 / 1</div>
+
+<script>
+  const secoes = [...document.querySelectorAll('section')];
+  const contador = document.getElementById('contador');
+  let atual = 0;
+  const marcar = new IntersectionObserver((es) => {
+    es.forEach((e) => { if (e.isIntersecting) { atual = secoes.indexOf(e.target); contador.textContent = `${atual + 1} / ${secoes.length}`; } });
+  }, { threshold: 0.55 });
+  secoes.forEach((s) => marcar.observe(s));
+  addEventListener('keydown', (e) => {
+    const avanca = ['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key);
+    const volta = ['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key);
+    if (!avanca && !volta) return;
+    e.preventDefault();
+    const alvo = Math.max(0, Math.min(secoes.length - 1, atual + (avanca ? 1 : -1)));
+    secoes[alvo].scrollIntoView();
+  });
+</script>
+</body>
+</html>

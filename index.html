@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argos</title>
+<style>
+  :root {
+    --bg: #ffffff; --painel: #f6f7f9; --borda: #e3e6ea; --texto: #1b1f24; --suave: #6b7480;
+    --destaque: #c0392b; --sel: #e8ebef; --link: #1b1f24;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171b; --painel: #1b1f24; --borda: #2a3037; --texto: #e6e9ed; --suave: #8a94a1; --sel: #262c33; --link: #e6e9ed; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--texto); height: 100vh; display: flex; }
+  aside { width: 260px; background: var(--painel); border-right: 1px solid var(--borda); padding: 16px 12px; overflow-y: auto; flex-shrink: 0; }
+  aside h1 { font-size: 20px; margin: 0 8px 14px; letter-spacing: -.3px; }
+  aside h1 span { color: var(--destaque); }
+  .busca { width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); font: inherit; margin-bottom: 12px; }
+  .item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; color: var(--texto); }
+  .item:hover { background: var(--sel); }
+  .item.ativo { background: var(--sel); font-weight: 600; }
+  .item .n { color: var(--suave); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .item.erro { color: var(--suave); text-decoration: line-through; }
+  .item.grupo { margin-top: 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); font-weight: 600; }
+  .item.sub { padding-left: 20px; }
+  .sep { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); margin: 16px 10px 6px; }
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--borda); flex-wrap: wrap; }
+  header h2 { margin: 0; font-size: 17px; flex: 1; }
+  header .meta { color: var(--suave); font-size: 13px; }
+  input[type=date] { font: inherit; padding: 5px 8px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); }
+  button, select { font: inherit; padding: 6px 12px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); cursor: pointer; }
+  button:hover { background: var(--sel); }
+  #lista { overflow-y: auto; flex: 1; }
+  .post { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; padding: 12px 20px; border-bottom: 1px solid var(--borda); align-items: baseline; }
+  .post:hover { background: var(--painel); }
+  .post a { color: var(--link); text-decoration: none; font-weight: 600; }
+  .post.lido a { font-weight: 400; color: var(--suave); }
+  .post a:hover { text-decoration: underline; }
+  .post .fonte { font-size: 12px; color: var(--suave); }
+  .post .hora { font-size: 13px; color: var(--suave); text-align: right; white-space: nowrap; }
+  .post .acoes { grid-column: 2; grid-row: 2; text-align: right; }
+  .estrela { cursor: pointer; color: var(--suave); font-size: 18px; background: none; border: none; padding: 0 4px; }
+  .estrela.on { color: #e0a800; }
+  .vazio { padding: 40px 20px; color: var(--suave); text-align: center; }
+  .dia { padding: 8px 20px; background: var(--painel); font-size: 12px; font-weight: 600; color: var(--suave); position: sticky; top: 0; border-bottom: 1px solid var(--borda); }
+  .abas { display: flex; }
+  .abas button { border-radius: 0; margin: 0; }
+  .abas button:first-child { border-radius: 8px 0 0 8px; }
+  .abas button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
+  .abas button.on { background: var(--sel); font-weight: 600; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--sel); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 13px; text-transform: none; letter-spacing: 0; }
+  .chip button { border: 0; background: none; padding: 0 8px; }
+  #analise { overflow-y: auto; flex: 1; padding: 20px; display: none; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  .cartao { border: 1px solid var(--borda); border-radius: 12px; padding: 16px; background: var(--bg); }
+  .cartao h3 { margin: 0 0 4px; font-size: 15px; }
+  .cartao .sub { color: var(--suave); font-size: 12px; margin-bottom: 12px; }
+  .barra { display: grid; grid-template-columns: 150px 1fr 44px; gap: 8px; align-items: center; padding: 3px 0; cursor: pointer; font-size: 13px; }
+  .barra:hover .trilho i { opacity: .8; }
+  .barra .rot { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barra .trilho { background: var(--painel); border-radius: 4px; height: 14px; }
+  .barra .trilho i { display: block; height: 100%; border-radius: 4px; background: var(--destaque); }
+  .barra .val { text-align: right; color: var(--suave); font-variant-numeric: tabular-nums; }
+  .cartao select { margin-bottom: 10px; }
+  .aviso { color: var(--suave); font-size: 12px; margin-top: 10px; }
+  .kpis { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .kpi { border: 1px solid var(--borda); border-radius: 12px; padding: 12px 18px; min-width: 130px; }
+  .kpi b { display: block; font-size: 24px; }
+  .kpi span { color: var(--suave); font-size: 12px; }
+  @media (max-width: 720px) { body { flex-direction: column; } aside { width: 100%; max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--borda); } }
+</style>
+</head>
+<body>
+<aside>
+  <h1><span>Argos</span></h1>
+  <input class="busca" id="busca" type="search" placeholder="Buscar nas notícias…">
+  <div id="menu"></div>
+</aside>
+<main>
+  <header>
+    <h2 id="titulo">Todos os posts</h2>
+    <span class="meta" id="meta"></span>
+    <div class="abas"><button id="aba-lista" class="on">Notícias</button><button id="aba-analise">Análise</button></div>
+    <select id="periodo">
+      <option value="0">Todo o período</option>
+      <option value="3600000">Última hora</option>
+      <option value="21600000">Últimas 6 h</option>
+      <option value="86400000" selected>Últimas 24 h</option>
+      <option value="604800000">Últimos 7 dias</option>
+    </select>
+    <label class="meta">De <input type="date" id="de"></label>
+    <label class="meta">até <input type="date" id="ate"></label>
+    <button id="marcar">Marcar como lidos</button>
+    <button id="csv" title="Baixar os dados classificados">Exportar CSV</button>
+    <button id="atualizar">Atualizar</button>
+  </header>
+  <div id="lista"></div>
+  <div id="analise"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const ler = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+
+let dados = { itens: [], status: [] };
+let lidos = new Set(ler('lidos', []));
+let favoritos = new Set(ler('favoritos', []));
+let filtro = { tipo: 'todos', valor: null };
+let termo = '';
+let visao = 'lista';
+let extra = {}; // { cat, uf, arma } vindos dos gráficos
+let ufGrafico = '';
+const UF_NOME = { AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins' };
+
+const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function visiveis(semExtra) {
+  const de = $('de').value, ate = $('ate').value; // datas escolhidas manualmente substituem o seletor de período
+  const limite = de || ate ? 0 : +$('periodo').value;
+  const agora = Date.now();
+  const q = norm(termo);
+  return dados.itens.filter((i) => {
+    if (limite && (!i.data || agora - new Date(i.data) > limite)) return false;
+    if (de && (!i.data || i.data.slice(0, 10) < de)) return false;
+    if (ate && (!i.data || i.data.slice(0, 10) > ate)) return false;
+    if (filtro.tipo === 'grupo' && i.grupo !== filtro.valor) return false;
+    if (filtro.tipo === 'fonte' && i.fonteId !== filtro.valor) return false;
+    if (filtro.tipo === 'naolidos' && lidos.has(i.id)) return false;
+    if (filtro.tipo === 'favoritos' && !favoritos.has(i.id)) return false;
+    if (q && !norm(i.titulo + ' ' + i.resumo).includes(q)) return false;
+    if (!semExtra && extra.cat && !(i.cats || []).includes(extra.cat)) return false;
+    if (!semExtra && extra.uf && i.uf !== extra.uf) return false;
+    if (!semExtra && extra.arma && !(i.morte && (i.arma || 'Não informada') === extra.arma)) return false;
+    return true;
+  });
+}
+
+function menu() {
+  const naoLidos = dados.itens.filter((i) => !lidos.has(i.id)).length;
+  const linha = (tipo, valor, nome, n, cls = '') =>
+    `<div class="item ${cls} ${filtro.tipo === tipo && filtro.valor === valor ? 'ativo' : ''}" data-tipo="${tipo}" data-valor="${valor ?? ''}"><span>${esc(nome)}</span><span class="n">${n ?? ''}</span></div>`;
+  $('menu').innerHTML =
+    linha('todos', null, 'Todos os posts', dados.itens.length) +
+    linha('naolidos', null, 'Não lidos', naoLidos) +
+    linha('favoritos', null, '★ Favoritados', favoritos.size) +
+    [...new Set(dados.status.map((s) => s.grupo))].map((g) =>
+      `<div class="item grupo ${filtro.tipo === 'grupo' && filtro.valor === g ? 'ativo' : ''}" data-tipo="grupo" data-valor="${esc(g)}"><span>${esc(g)}</span><span class="n">${dados.itens.filter((i) => i.grupo === g).length}</span></div>` +
+      dados.status.filter((s) => s.grupo === g).map((s) => linha('fonte', s.id, s.nome, s.ok ? dados.itens.filter((i) => i.fonteId === s.id).length : '✕', 'sub ' + (s.ok ? '' : 'erro'))).join('')
+    ).join('');
+}
+
+function hora(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+const diaRotulo = (iso) => {
+  if (!iso) return 'Sem data';
+  const d = new Date(iso), h = new Date();
+  const ontem = new Date(); ontem.setDate(h.getDate() - 1);
+  if (d.toDateString() === h.toDateString()) return 'Hoje';
+  if (d.toDateString() === ontem.toDateString()) return 'Ontem';
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+};
+
+function chips() {
+  const nomes = { cat: 'Crime', uf: 'Estado', arma: 'Arma' };
+  return Object.entries(extra).map(([k, v]) => `<span class="chip">${nomes[k]}: ${esc(k === 'uf' ? (UF_NOME[v] || v) : v)}<button data-limpar="${k}" title="Remover">✕</button></span>`).join(' ');
+}
+
+function barras(pares, chave, max) {
+  const m = Math.max(1, ...pares.map((p) => p[1]));
+  return pares.slice(0, max || 12).map(([nome, n, rot]) =>
+    `<div class="barra" data-filtro="${chave}" data-valor="${esc(nome)}" title="Ver notícias"><span class="rot">${esc(rot || nome)}</span><span class="trilho"><i style="width:${(n / m) * 100}%"></i></span><span class="val">${n}</span></div>`).join('') || '<div class="aviso">Sem dados neste período.</div>';
+}
+
+function analise() {
+  const todas = visiveis(true);
+  const itens = todas.filter((i) => !i.dup); // conta casos distintos, não notícias repetidas
+  const cats = {}, armas = {}, ufs = {}, regs = {}, dias = {};
+  const REGIAO = { Norte: 'AC AP AM PA RO RR TO', Nordeste: 'AL BA CE MA PB PE PI RN SE', 'Centro-Oeste': 'DF GO MT MS', Sudeste: 'ES MG RJ SP', Sul: 'PR RS SC' };
+  const ufReg = {};
+  for (const [r, l] of Object.entries(REGIAO)) l.split(' ').forEach((u) => (ufReg[u] = r));
+  let semUf = 0, mortes = 0;
+  for (const i of itens) {
+    for (const c of i.cats || []) cats[c] = (cats[c] || 0) + 1;
+    if (i.morte) { mortes++; const a = i.arma || 'Não informada'; armas[a] = (armas[a] || 0) + 1; }
+    if (i.uf) {
+      if (!ufGrafico || (i.cats || []).includes(ufGrafico)) { ufs[i.uf] = (ufs[i.uf] || 0) + 1; regs[ufReg[i.uf]] = (regs[ufReg[i.uf]] || 0) + 1; }
+    } else semUf++;
+    if (i.data) { const d = i.data.slice(0, 10); dias[d] = (dias[d] || 0) + 1; }
+  }
+  const ord = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]);
+  const opcoes = ['', ...Object.keys(cats)].map((c) => `<option value="${esc(c)}" ${c === ufGrafico ? 'selected' : ''}>${c || 'Todas as categorias'}</option>`).join('');
+  const comArma = Object.entries(armas).filter(([a]) => a !== 'Não informada').reduce((t, [, n]) => t + n, 0);
+  const diaRot = (d) => new Date(d + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+  $('analise').innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><b>${todas.length}</b><span>notícias no período</span></div>
+      <div class="kpi"><b>${itens.length}</b><span>casos distintos</span></div>
+      <div class="kpi"><b>${mortes}</b><span>envolvendo morte</span></div>
+      <div class="kpi"><b>${comArma}</b><span>mortes com arma identificada</span></div>
+      <div class="kpi"><b>${itens.length - semUf}</b><span>com estado identificado</span></div>
+    </div>
+    <div class="grade">
+      <div class="cartao"><h3>Notícias por tipo de crime</h3><div class="sub">Casos distintos (notícias repetidas do mesmo fato contam uma vez). Um caso pode ter mais de um tipo. Clique numa barra para ver as notícias.</div>${barras(ord(cats), 'cat', 14)}</div>
+      <div class="cartao"><h3>Mortes por tipo de arma</h3><div class="sub">Notícias que mencionam morte, pelo meio descrito no texto.</div>${barras(ord(armas), 'arma')}<div class="aviso">"Não informada" = a manchete não diz como a vítima morreu.</div></div>
+      <div class="cartao"><h3>Estados com mais notícias</h3><div class="sub">Filtre por tipo de ocorrência:</div><select id="ufcat">${opcoes}</select>${barras(ord(ufs).map(([u, n]) => [u, n, UF_NOME[u] || u]), 'uf', 12)}<div class="aviso">${semUf} notícias sem local identificado ficam de fora.</div></div>
+      <div class="cartao"><h3>Notícias por região</h3><div class="sub">${ufGrafico ? esc(ufGrafico) : 'Todas as categorias'}</div>${barras(ord(regs), 'regiao')}</div>
+      <div class="cartao"><h3>Notícias por dia</h3><div class="sub">Volume de notícias coletadas.</div>${barras(Object.entries(dias).sort().reverse().map(([d, n]) => [d, n, diaRot(d)]), 'dia', 8)}</div>
+    </div>
+    <div class="aviso">A classificação é feita por palavras-chave (script analise.py) sobre título e resumo; é uma estimativa, não estatística oficial.</div>`;
+}
+
+function lista() {
+  $('lista').style.display = visao === 'lista' ? '' : 'none';
+  $('analise').style.display = visao === 'analise' ? 'block' : 'none';
+  $('aba-lista').classList.toggle('on', visao === 'lista');
+  $('aba-analise').classList.toggle('on', visao === 'analise');
+  $('marcar').style.display = visao === 'lista' ? '' : 'none';
+  if (visao === 'analise') { analise(); menu(); return meta(); }
+  const itens = visiveis();
+  let ultimoDia = '', html = '';
+  const LIMITE = 500;
+  for (const i of itens.slice(0, LIMITE)) {
+    const dia = diaRotulo(i.data);
+    if (dia !== ultimoDia) { html += `<div class="dia">${esc(dia)}</div>`; ultimoDia = dia; }
+    html += `<div class="post ${lidos.has(i.id) ? 'lido' : ''}">
+      <a href="${esc(i.link)}" target="_blank" rel="noopener" data-id="${esc(i.id)}">${esc(i.titulo)}</a>
+      <span class="hora">${hora(i.data)}</span>
+      <span class="fonte">${esc(i.fonte)}</span>
+      <span class="acoes"><button class="estrela ${favoritos.has(i.id) ? 'on' : ''}" data-fav="${esc(i.id)}" title="Favoritar">${favoritos.has(i.id) ? '★' : '☆'}</button></span>
+    </div>`;
+  }
+  if (itens.length > LIMITE) html += `<div class="vazio">Mostrando as ${LIMITE} mais recentes de ${itens.length}. Use a busca, o período ou os filtros para refinar, ou exporte o CSV com tudo.</div>`;
+  html = (Object.keys(extra).length ? `<div class="dia">Filtros: ${chips()}</div>` : '') + html;
+  $('lista').innerHTML = html || '<div class="vazio">Nenhuma notícia encontrada com esses filtros.</div>';
+  const nomes = { todos: 'Todos os posts', naolidos: 'Não lidos', favoritos: 'Favoritados' };
+  $('titulo').textContent = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? (dados.status.find((s) => s.id === filtro.valor)?.nome ?? '') : nomes[filtro.tipo];
+  meta(itens.length);
+  menu();
+}
+
+function meta(n) {
+  const quando = dados.atualizadoEm ? new Date(dados.atualizadoEm).toLocaleTimeString('pt-BR') : '–';
+  $('meta').textContent = `${n ?? visiveis(true).length} notícias · atualizado às ${quando}`;
+}
+
+async function carregar(forcar) {
+  $('atualizar').disabled = true; $('atualizar').textContent = 'Atualizando…';
+  try {
+    const de = $('de').value, ate = $('ate').value;
+    const params = de || ate ? `de=${de}&ate=${ate}` : `horas=${Math.round((+$('periodo').value || 0) / 3600000)}`;
+    if (forcar) await fetch('/api/atualizar');
+    dados = await (await fetch('/api/noticias?' + params)).json();
+    dados.itens.forEach((i) => { i.id = i.link; i.cats = i.cats || []; i.resumo = i.resumo || ''; }); // o link é o identificador
+  } catch { $('meta').textContent = 'Servidor indisponível'; }
+  $('atualizar').disabled = false; $('atualizar').textContent = 'Atualizar';
+  lista();
+}
+
+$('menu').onclick = (e) => {
+  const el = e.target.closest('.item'); if (!el) return;
+  filtro = { tipo: el.dataset.tipo, valor: el.dataset.valor || null };
+  lista();
+};
+$('aba-lista').onclick = () => { visao = 'lista'; lista(); };
+$('aba-analise').onclick = () => { visao = 'analise'; lista(); };
+$('analise').onclick = (e) => {
+  const b = e.target.closest('[data-filtro]');
+  if (!b) return;
+  const { filtro: k, valor } = b.dataset;
+  if (['cat', 'uf', 'arma'].includes(k)) { extra = { [k]: valor }; visao = 'lista'; lista(); }
+};
+$('analise').onchange = (e) => { if (e.target.id === 'ufcat') { ufGrafico = e.target.value; analise(); } };
+$('lista').addEventListener('click', (e) => {
+  const l = e.target.closest('[data-limpar]');
+  if (l) { delete extra[l.dataset.limpar]; lista(); }
+});
+$('busca').oninput = (e) => { termo = e.target.value; lista(); };
+$('periodo').onchange = () => { $('de').value = ''; $('ate').value = ''; carregar(false); };
+$('de').onchange = $('ate').onchange = () => carregar(false);
+$('csv').onclick = () => { const de = $('de').value, ate = $('ate').value;
+  location.href = '/api/exportar.csv?' + (de || ate ? `de=${de}&ate=${ate}` : 'horas=' + Math.round((+$('periodo').value || 0) / 3600000)); };
+$('atualizar').onclick = () => carregar(true);
+$('marcar').onclick = () => { visiveis().forEach((i) => lidos.add(i.id)); guardar('lidos', [...lidos]); lista(); };
+$('lista').onclick = (e) => {
+  const fav = e.target.closest('[data-fav]');
+  if (fav) {
+    const id = fav.dataset.fav;
+    favoritos.has(id) ? favoritos.delete(id) : favoritos.add(id);
+    guardar('favoritos', [...favoritos]); return lista();
+  }
+  const a = e.target.closest('a[data-id]');
+  if (a) { lidos.add(a.dataset.id); guardar('lidos', [...lidos]); a.closest('.post').classList.add('lido'); menu(); }
+};
+
+carregar(false);
+setInterval(() => carregar(false), 10 * 60 * 1000); // os dados mudam uma vez por dia
+</script>
+</body>
+</html>
