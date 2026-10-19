@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Coletar
-        run: node coletar.js site
+        run: node coletar.js site/data
         env:
           PYTHON: python3
 
