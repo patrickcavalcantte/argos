@@ -177,8 +177,8 @@ async function atualizar() {
     for (const i of itens) Object.assign(i, analise.tags[i.id]);
     // Buscas do Google trazem ruído: sem nenhum tipo de crime reconhecido, não é segurança pública
     for (const i of itens) if (i.grupo === 'Google Notícias' && !(i.cats && i.cats.length)) historico.delete(i.id);
-    // Fora do escopo (exterior ou política partidária): fica no histórico, mas não aparece nem é exportado
-    itens = itens.filter((i) => historico.has(i.id) && !i.exterior && !i.politica);
+    // Fora do escopo (fora do RJ, exterior ou política partidária): fica no histórico, mas não aparece nem é exportado
+    itens = itens.filter((i) => historico.has(i.id) && !i.exterior && !i.politica && i.uf === 'RJ');
   }
   salvarHistorico();
   const novas = adicionadas.filter((id) => historico.has(id)).length;

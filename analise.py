@@ -146,6 +146,41 @@ def uf_por_municipio(texto_sem_acento):
     rx, mapa = _MUN
     m = rx.search(texto_sem_acento)
     return mapa[m.group(1)] if m else None
+# ---------- Municípios do RJ (recorte dentro do estado) ----------
+REGIOES_RJ = {
+    "Metropolitana": "Belford Roxo|Cachoeiras de Macacu|Duque de Caxias|Guapimirim|Itaboraí|Itaguaí|Japeri|Magé|Maricá|Mesquita|Nilópolis|Niterói|Nova Iguaçu|Paracambi|Queimados|Rio de Janeiro|São Gonçalo|São João de Meriti|Seropédica|Tanguá|Rio Bonito",
+    "Baixadas Litorâneas": "Araruama|Armação dos Búzios|Arraial do Cabo|Cabo Frio|Casimiro de Abreu|Iguaba Grande|Rio das Ostras|São Pedro da Aldeia|Saquarema|Silva Jardim",
+    "Norte Fluminense": "Campos dos Goytacazes|Carapebus|Cardoso Moreira|Conceição de Macabu|Macaé|Quissamã|São Fidélis|São Francisco de Itabapoana|São João da Barra",
+    "Noroeste Fluminense": "Aperibé|Bom Jesus do Itabapoana|Cambuci|Italva|Itaocara|Itaperuna|Laje do Muriaé|Miracema|Natividade|Porciúncula|Santo Antônio de Pádua|São José de Ubá|Varre-Sai",
+    "Serrana": "Bom Jardim|Cantagalo|Carmo|Cordeiro|Duas Barras|Macuco|Nova Friburgo|Petrópolis|Santa Maria Madalena|São José do Vale do Rio Preto|São Sebastião do Alto|Sumidouro|Teresópolis|Trajano de Moraes",
+    "Centro-Sul Fluminense": "Areal|Comendador Levy Gasparian|Engenheiro Paulo de Frontin|Mendes|Miguel Pereira|Paraíba do Sul|Paty do Alferes|Sapucaia|Três Rios|Vassouras",
+    "Médio Paraíba": "Barra do Piraí|Barra Mansa|Itatiaia|Pinheiral|Piraí|Porto Real|Quatis|Resende|Rio Claro|Rio das Flores|Valença|Volta Redonda",
+    "Baía da Ilha Grande": "Angra dos Reis|Mangaratiba|Paraty",
+}
+MUN_REGIAO_RJ = {m: r for r, ms in REGIOES_RJ.items() for m in ms.split("|")}
+# Bairros, favelas e expressões que indicam a capital
+ALIAS_CAPITAL = ("complexo da mare|complexo do alemao|complexo da penha|complexo de israel|jacarezinho|rocinha|cidade de deus|vidigal|zona norte do rio|zona oeste do rio|zona sul do rio|"
+                 "santa cruz|campo grande|bangu|realengo|madureira|copacabana|ipanema|leblon|barra da tijuca|tijuca|centro do rio|capital fluminense|capital carioca|cidade do rio|"
+                 "av. brasil|avenida brasil|linha vermelha|linha amarela").split("|")
+_ALIAS_MUN = {sem_acento(m).lower(): m for m in MUN_REGIAO_RJ}
+_ALIAS_MUN.update({a: "Rio de Janeiro" for a in ALIAS_CAPITAL})
+_ALIAS_MUN["rio"] = "Rio de Janeiro"
+_nomes_rj = sorted(_ALIAS_MUN, key=len, reverse=True)
+# "rio" sozinho só vale precedido de preposição e fora de nomes compostos (Rio Branco, Rio Grande…)
+_MUN_RJ_RE = re.compile(r"(?:\b(?:em|de|do|da|no|na|pela|pelo|para|ao|a|entre)\s+|[,(/–-]\s*)(" + "|".join(re.escape(n) for n in _nomes_rj) + r")\b(?!\s+(?:grande|branco|preto|verde|negro|doce|pardo|claro de|das ostras de)\b)")
+
+
+def municipio_rj(titulo, resumo):
+    """Município do RJ citado no título (ou, na falta, no resumo). A capital só vale se nenhum outro município
+    aparecer, porque 'Rio de Janeiro' no título costuma ser o estado."""
+    for texto in (sem_acento(titulo).lower(), sem_acento(resumo).lower()):
+        achados = [_ALIAS_MUN[m.group(1)] for m in _MUN_RJ_RE.finditer(texto)]
+        outros = [m for m in achados if m != "Rio de Janeiro"]
+        if outros:
+            return outros[0]
+        if achados:
+            return achados[0]
+    return None
 # nomes mais longos primeiro (ex.: "Rio Grande do Sul" antes de "Rio")
 ESTADOS_RE = sorted(((re.compile(r"\b" + re.escape(n) + r"\b"), uf) for n, uf in ESTADOS.items()), key=lambda x: -len(x[0].pattern))
 SIGLA_RE = re.compile(r"(?:\(|/|, | - |(?:em|no|na|do|da|de) )(" + "|".join(UF_NOME) + r")(?=\)|[\s,.:;!?]|$)")
@@ -227,7 +262,8 @@ def classificar(item):
     politica = bool(POLITICA_FORTE.search(baixo)) and not (CATS_FATO & set(cats))
     exterior = eh_exterior(titulo, texto_orig)
     uf = None if exterior else detectar_uf(titulo, texto_orig, item.get("fonteUf"))
-    return {"cats": cats, "arma": arma, "uf": uf, "regiao": UF_REGIAO.get(uf), "morte": morte, "exterior": exterior, "politica": politica}
+    mun = municipio_rj(titulo, resumo) if uf == "RJ" and not exterior else None
+    return {"cats": cats, "arma": arma, "uf": uf, "regiao": UF_REGIAO.get(uf), "mun": mun, "regiaoRJ": MUN_REGIAO_RJ.get(mun), "morte": morte, "exterior": exterior, "politica": politica}
 
 
 STOP = set("de da do das dos em no na nos nas por para com sem sob sobre apos ate que como mais mas uma uns umas ele ela eles elas foi sao ser ter tem pode vai um o a e os as ao aos pela pelo suspeito suspeita homem mulher policia civil militar preso presos presa apos diz".split())

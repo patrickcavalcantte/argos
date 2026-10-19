@@ -22,9 +22,8 @@
     const cats = {}, armas = {}, regs = {}, dias = {}, fontes = {}, ufs = {};
     for (const i of casos) {
       for (const c of i.cats || []) cats[c] = (cats[c] || 0) + 1;
-      const r = i.regiao || (i.uf ? 'Sem região identificada' : 'Local não identificado');
-      regs[r] = (regs[r] || 0) + 1;
-      if (i.uf) ufs[i.uf] = (ufs[i.uf] || 0) + 1;
+      regs[i.regiaoRJ || 'Região não identificada'] = (regs[i.regiaoRJ || 'Região não identificada'] || 0) + 1;
+      if (i.mun) ufs[i.mun] = (ufs[i.mun] || 0) + 1;
       if (i.data) { const d = i.data.slice(0, 10); dias[d] = (dias[d] || 0) + 1; }
     }
     const cobertura = {}; // veículos regionais (grupos "RJ · Região"): onde a imprensa local registrou o caso
@@ -41,11 +40,11 @@
     if (casos.length) resumo.push(`<b>${num(mortes.length)} casos (${pct(mortes.length, casos.length)})</b> envolvem morte${mortes.length ? `; em ${num(comArma)} deles a notícia informa o meio utilizado` : ''}.`);
     if (topCat) resumo.push(`O tipo de ocorrência mais frequente é <b>${esc(topCat[0])}</b> (${num(topCat[1])} casos, ${pct(topCat[1], casos.length)}).`);
     if (topArma) resumo.push(`Entre as mortes com meio identificado, predomina <b>${esc(topArma[0])}</b> (${num(topArma[1])}).`);
-    if (topReg && topReg[0] !== 'Local não identificado') resumo.push(`A região com mais registros é <b>${esc(topReg[0])}</b> (${num(topReg[1])} casos).`);
+    if (topReg && topReg[0] !== 'Região não identificada') resumo.push(`A região do estado com mais registros é <b>${esc(topReg[0])}</b> (${num(topReg[1])} casos).`);
     if (picoDia) resumo.push(`O dia de maior volume foi <b>${dataBr(picoDia[0] + 'T12:00')}</b>, com ${num(picoDia[1])} casos.`);
 
     const LIM_MORTES = 300, LIM_CASOS = 400;
-    const linha = (i) => `<tr><td class="nw">${dataBr(i.data)}</td><td>${esc(i.regiao || i.uf || '—')}</td><td><a href="${esc(seguro(i.link))}">${esc(i.titulo)}</a></td><td>${esc(i.fonte || '')}</td><td>${esc((i.cats || []).join('; '))}</td></tr>`;
+    const linha = (i) => `<tr><td class="nw">${dataBr(i.data)}</td><td>${esc(i.mun || i.regiaoRJ || '—')}</td><td><a href="${esc(seguro(i.link))}">${esc(i.titulo)}</a></td><td>${esc(i.fonte || '')}</td><td>${esc((i.cats || []).join('; '))}</td></tr>`;
     const porData = (a, b) => (b.data || '').localeCompare(a.data || '');
     const cabecalho = '<thead><tr><th>Data</th><th>Local</th><th>Notícia</th><th>Fonte</th><th>Tipo</th></tr></thead>';
     const outros = casos.filter((i) => !i.morte).sort(porData);
@@ -112,10 +111,10 @@ ${casos.length ? `<ul class="resumo">${resumo.map((r) => `<li>${r}</li>`).join('
 <div class="duas">
   <div><b>Casos por tipo de ocorrência</b><div class="nota">Um caso pode ter mais de um tipo.</div>${barras(ord(cats), 12)}</div>
   <div><b>Mortes por meio utilizado</b><div class="nota">Conforme descrito no texto da notícia.</div>${barras(ord(armas), 8)}</div>
-  <div><b>Casos por região do país</b>${barras(ord(regs), 10)}</div>
+  <div><b>Casos por região do estado</b>${barras(ord(regs), 10)}</div>
   ${Object.keys(cobertura).length ? `<div><b>Casos noticiados por veículos regionais do RJ</b><div class="nota">Região do veículo que publicou, não necessariamente do fato.</div>${barras(ord(cobertura), 8)}</div>` : ''}
   <div><b>Casos por dia</b>${barras(Object.entries(dias).sort().reverse().map(([d, n]) => [new Date(d + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }), n]), 10)}</div>
-  ${Object.keys(ufs).length > 1 ? `<div><b>Casos por estado</b>${barras(ord(ufs), 10)}</div>` : ''}
+  <div><b>Casos por município</b><div class="nota">Só os casos em que a notícia cita o município.</div>${barras(ord(ufs), 15)}</div>
   <div><b>Veículos com mais notícias</b>${barras(ord(fontes), 10)}</div>
 </div>
 
@@ -127,7 +126,7 @@ ${outros.length ? `<table>${cabecalho}<tbody>${outros.slice(0, LIM_CASOS).map(li
 
 <h2>5. Metodologia e limitações</h2>
 <div class="aviso">
-  Relatório <b>preliminar e automatizado</b>, produzido a partir de ${num(op.fontes || Object.keys(fontes).length)} fontes de imprensa (RSS e Google Notícias). A classificação (tipo de ocorrência, meio utilizado, local e morte) é feita por palavras-chave sobre título e resumo, e <b>pode conter erros</b>; casos repetidos por vários veículos são agrupados e contados uma vez. Não é estatística oficial, não substitui dados dos órgãos de segurança e as informações devem ser verificadas nas matérias originais (links acima). Notícias sem local identificável não entram nos recortes por região e estado. O conteúdo pertence aos veículos de origem.
+  Relatório <b>preliminar e automatizado</b>, produzido a partir de ${num(op.fontes || Object.keys(fontes).length)} fontes de imprensa (RSS e Google Notícias). A classificação (tipo de ocorrência, meio utilizado, local e morte) é feita por palavras-chave sobre título e resumo, e <b>pode conter erros</b>; casos repetidos por vários veículos são agrupados e contados uma vez. Não é estatística oficial, não substitui dados dos órgãos de segurança e as informações devem ser verificadas nas matérias originais (links acima). Notícias que não citam o município não entram no recorte municipal. O conteúdo pertence aos veículos de origem.
 </div>
 </div></body></html>`;
   }

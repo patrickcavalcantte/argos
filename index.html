@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Argos · Notícias de segurança pública</title>
-<meta name="description" content="Monitor de notícias de segurança pública no Brasil: dezenas de fontes reunidas, classificadas por tipo de crime, arma e estado, com análise e exportação em CSV e XLSX.">
+<meta name="description" content="Monitor de notícias de segurança pública no estado do Rio de Janeiro: dezenas de fontes reunidas, classificadas por tipo de crime, arma e município, com análise e exportação em CSV e XLSX.">
 <meta name="theme-color" content="#c0392b">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -12,7 +12,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Argos">
 <meta property="og:title" content="Argos · Notícias de segurança pública">
-<meta property="og:description" content="Monitor de notícias de segurança pública no Brasil: dezenas de fontes reunidas, classificadas por tipo de crime, arma e estado, com análise e exportação em CSV e XLSX.">
+<meta property="og:description" content="Monitor de notícias de segurança pública no estado do Rio de Janeiro: dezenas de fontes reunidas, classificadas por tipo de crime, arma e município, com análise e exportação em CSV e XLSX.">
 <meta property="og:url" content="https://patrickcavalcantte.github.io/argos/">
 <meta property="og:image" content="https://patrickcavalcantte.github.io/argos/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -105,13 +105,13 @@
       <option value="604800000" selected>Últimos 7 dias</option>
       <option value="1296000000">Últimos 15 dias</option>
     </select>
-    <select id="uf" title="Filtrar por estado"><option value="">Todos os estados</option></select>
+    <select id="uf" title="Filtrar por município do Rio de Janeiro"><option value="">Todos os municípios</option></select>
     <label class="meta">De <input type="date" id="de"></label>
     <label class="meta">até <input type="date" id="ate"></label>
     <button id="marcar">Marcar como lidos</button>
     <button id="csv" title="Baixar os dados classificados">Exportar CSV</button>
     <button id="xlsx" title="Planilha Excel com links clicáveis">Exportar XLSX</button>
-    <button id="relatorio" title="Relatório preliminar do período e estado escolhidos, pronto para imprimir ou salvar em PDF">Relatório</button>
+    <button id="relatorio" title="Relatório preliminar do período e município escolhidos, pronto para imprimir ou salvar em PDF">Relatório</button>
     <button id="atualizar">Atualizar</button>
   </header>
   <div id="lista"></div>
@@ -137,8 +137,7 @@ let termo = '';
 let visao = 'lista';
 let extra = {}; // { cat, uf, arma } vindos dos gráficos
 let ufGrafico = '';
-let ufSel = ''; // filtro por estado, vale para lista, análise e exportações
-const UF_NOME = { AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins' };
+let ufSel = ''; // filtro por município do RJ, vale para lista, análise e exportações
 
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -152,7 +151,7 @@ function noPeriodo() {
     if (limite && (!i.data || agora - new Date(i.data) > limite)) return false;
     if (de && (!i.data || i.data.slice(0, 10) < de)) return false;
     if (ate && (!i.data || i.data.slice(0, 10) > ate)) return false;
-    if (ufSel && i.uf !== ufSel) return false;
+    if (ufSel && i.mun !== ufSel) return false;
     return true;
   });
 }
@@ -171,13 +170,13 @@ function visiveis(semExtra) {
   });
 }
 
-// Estados que aparecem nos dados, com a quantidade de notícias
+// Municípios do RJ que aparecem nos dados, com a quantidade de notícias
 function montarEstados() {
   const n = {};
-  for (const i of dados.itens) if (i.uf) n[i.uf] = (n[i.uf] || 0) + 1;
-  const ufs = Object.keys(n).sort((a, b) => (UF_NOME[a] || a).localeCompare(UF_NOME[b] || b, 'pt-BR'));
-  $('uf').innerHTML = '<option value="">Todos os estados</option>' + ufs.map((u) => `<option value="${u}">${esc(UF_NOME[u] || u)} (${n[u]})</option>`).join('');
-  $('uf').value = ufs.includes(ufSel) ? ufSel : (ufSel = '');
+  for (const i of dados.itens) if (i.mun) n[i.mun] = (n[i.mun] || 0) + 1;
+  const muns = Object.keys(n).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  $('uf').innerHTML = '<option value="">Todos os municípios</option>' + muns.map((m) => `<option value="${esc(m)}">${esc(m)} (${n[m]})</option>`).join('');
+  $('uf').value = muns.includes(ufSel) ? ufSel : (ufSel = '');
 }
 
 // Meses do arquivo que o período escolhido precisa: com datas, os meses do intervalo; em "Todo o período", todos
@@ -232,8 +231,8 @@ const diaRotulo = (iso) => {
 };
 
 function chips() {
-  const nomes = { cat: 'Crime', uf: 'Estado', arma: 'Arma' };
-  return Object.entries(extra).map(([k, v]) => `<span class="chip">${nomes[k]}: ${esc(k === 'uf' ? (UF_NOME[v] || v) : v)}<button data-limpar="${k}" title="Remover">✕</button></span>`).join(' ');
+  const nomes = { cat: 'Crime', uf: 'Município', arma: 'Arma' };
+  return Object.entries(extra).map(([k, v]) => `<span class="chip">${nomes[k]}: ${esc(v)}<button data-limpar="${k}" title="Remover">✕</button></span>`).join(' ');
 }
 
 function barras(pares, chave, max) {
@@ -243,19 +242,19 @@ function barras(pares, chave, max) {
 }
 
 // Histórico longo: as notícias ficam só 30 dias no ar, mas as contagens diárias são acumuladas (contagens.json)
-let serie = ''; // '' = todos os casos, ou 'uf:SP' / 'cat:Roubo / furto'
+let serie = ''; // '' = todos os casos, ou 'mun:Niterói' / 'cat:Roubo / furto'
 function tendencia() {
   const dias = Object.entries(contagens.dias || {}).sort();
   const [tipo, ...resto] = serie.split(':'), valor = resto.join(':');
   const meses = {}, ufs = new Set(), cats = new Set();
   for (const [d, v] of dias) {
-    Object.keys(v.uf || {}).forEach((u) => ufs.add(u));
+    Object.keys(v.mun || {}).forEach((u) => ufs.add(u));
     Object.keys(v.cat || {}).forEach((c) => cats.add(c));
     const m = d.slice(0, 7);
     meses[m] = (meses[m] || 0) + (serie ? (v[tipo] || {})[valor] || 0 : v.casos);
   }
   const op = (v, rot) => `<option value="${esc(v)}" ${v === serie ? 'selected' : ''}>${esc(rot)}</option>`;
-  const seletor = `<select id="serie">${op('', 'Todos os casos')}<optgroup label="Estado">${[...ufs].sort().map((u) => op('uf:' + u, UF_NOME[u] || u)).join('')}</optgroup><optgroup label="Tipo de crime">${[...cats].sort().map((c) => op('cat:' + c, c)).join('')}</optgroup></select>`;
+  const seletor = `<select id="serie">${op('', 'Todos os casos')}<optgroup label="Município">${[...ufs].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((u) => op('mun:' + u, u)).join('')}</optgroup><optgroup label="Tipo de crime">${[...cats].sort().map((c) => op('cat:' + c, c)).join('')}</optgroup></select>`;
   const mesRot = (m) => new Date(m + '-15T12:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
   const pares = Object.entries(meses).sort().reverse().map(([m, n]) => [m, n, mesRot(m)]);
   const desde = dias.length ? new Date(dias[0][0] + 'T12:00').toLocaleDateString('pt-BR') : '';
@@ -266,15 +265,12 @@ function analise() {
   const todas = visiveis(true);
   const itens = todas.filter((i) => !i.dup); // conta casos distintos, não notícias repetidas
   const cats = {}, armas = {}, ufs = {}, regs = {}, dias = {};
-  const REGIAO = { Norte: 'AC AP AM PA RO RR TO', Nordeste: 'AL BA CE MA PB PE PI RN SE', 'Centro-Oeste': 'DF GO MT MS', Sudeste: 'ES MG RJ SP', Sul: 'PR RS SC' };
-  const ufReg = {};
-  for (const [r, l] of Object.entries(REGIAO)) l.split(' ').forEach((u) => (ufReg[u] = r));
   let semUf = 0, mortes = 0;
   for (const i of itens) {
     for (const c of i.cats || []) cats[c] = (cats[c] || 0) + 1;
     if (i.morte) { mortes++; const a = i.arma || 'Não informada'; armas[a] = (armas[a] || 0) + 1; }
-    if (i.uf) {
-      if (!ufGrafico || (i.cats || []).includes(ufGrafico)) { ufs[i.uf] = (ufs[i.uf] || 0) + 1; regs[ufReg[i.uf]] = (regs[ufReg[i.uf]] || 0) + 1; }
+    if (i.mun) {
+      if (!ufGrafico || (i.cats || []).includes(ufGrafico)) { ufs[i.mun] = (ufs[i.mun] || 0) + 1; if (i.regiaoRJ) regs[i.regiaoRJ] = (regs[i.regiaoRJ] || 0) + 1; }
     } else semUf++;
     if (i.data) { const d = i.data.slice(0, 10); dias[d] = (dias[d] || 0) + 1; }
   }
@@ -288,13 +284,13 @@ function analise() {
       <div class="kpi"><b>${itens.length}</b><span>casos distintos</span></div>
       <div class="kpi"><b>${mortes}</b><span>envolvendo morte</span></div>
       <div class="kpi"><b>${comArma}</b><span>mortes com arma identificada</span></div>
-      <div class="kpi"><b>${itens.length - semUf}</b><span>com estado identificado</span></div>
+      <div class="kpi"><b>${itens.length - semUf}</b><span>com município identificado</span></div>
     </div>
     <div class="grade">
       <div class="cartao"><h3>Notícias por tipo de crime</h3><div class="sub">Casos distintos (notícias repetidas do mesmo fato contam uma vez). Um caso pode ter mais de um tipo. Clique numa barra para ver as notícias.</div>${barras(ord(cats), 'cat', 14)}</div>
       <div class="cartao"><h3>Mortes por tipo de arma</h3><div class="sub">Notícias que mencionam morte, pelo meio descrito no texto.</div>${barras(ord(armas), 'arma')}<div class="aviso">"Não informada" = a manchete não diz como a vítima morreu.</div></div>
-      <div class="cartao"><h3>Estados com mais notícias</h3><div class="sub">Filtre por tipo de ocorrência:</div><select id="ufcat">${opcoes}</select>${barras(ord(ufs).map(([u, n]) => [u, n, UF_NOME[u] || u]), 'uf', 12)}<div class="aviso">${semUf} notícias sem local identificado ficam de fora.</div></div>
-      <div class="cartao"><h3>Notícias por região</h3><div class="sub">${ufGrafico ? esc(ufGrafico) : 'Todas as categorias'}</div>${barras(ord(regs), 'regiao')}</div>
+      <div class="cartao"><h3>Municípios com mais notícias</h3><div class="sub">Filtre por tipo de ocorrência:</div><select id="ufcat">${opcoes}</select>${barras(ord(ufs).map(([u, n]) => [u, n, u]), 'uf', 15)}<div class="aviso">${semUf} notícias sem município identificado ficam de fora.</div></div>
+      <div class="cartao"><h3>Notícias por região do estado</h3><div class="sub">${ufGrafico ? esc(ufGrafico) : 'Todas as categorias'}</div>${barras(ord(regs), 'regiao')}</div>
       <div class="cartao"><h3>Notícias por dia</h3><div class="sub">Volume de notícias coletadas.</div>${barras(Object.entries(dias).sort().reverse().map(([d, n]) => [d, n, diaRot(d)]), 'dia', 8)}</div>
       ${tendencia()}
     </div>
@@ -373,7 +369,7 @@ $('analise').onclick = (e) => {
     $('de').value = `${valor}-01`; $('ate').value = `${valor}-${String(ultimo).padStart(2, '0')}`;
     const [tipo, ...resto] = serie.split(':'), v = resto.join(':');
     extra = tipo === 'cat' ? { cat: v } : {};
-    if (tipo === 'uf' && [...$('uf').options].some((o) => o.value === v)) { ufSel = v; $('uf').value = v; }
+    if (tipo === 'mun' && [...$('uf').options].some((o) => o.value === v)) { ufSel = v; $('uf').value = v; }
     visao = 'lista'; lista(); return;
   }
   if (k === 'uf') { ufSel = valor; $('uf').value = valor; extra = {}; visao = 'lista'; lista(); }
@@ -393,9 +389,9 @@ $('de').onchange = $('ate').onchange = () => { lista(); garantirArquivo(); };
 $('uf').onchange = () => { ufSel = $('uf').value; lista(); };
 
 // Exportações geradas no navegador, com o período escolhido na tela
-const CAMPOS = ['data', 'fonte', 'grupo', 'titulo', 'resumo', 'link', 'uf', 'regiao', 'categorias', 'arma', 'morte', 'duplicata', 'caso', 'coletadoEm'];
+const CAMPOS = ['data', 'fonte', 'grupo', 'titulo', 'resumo', 'link', 'mun', 'regiaoRJ', 'categorias', 'arma', 'morte', 'duplicata', 'caso', 'coletadoEm'];
 const campo = (i, c) => c === 'categorias' ? (i.cats || []).join('; ') : c === 'duplicata' ? (i.dup ? 'sim' : 'nao') : c === 'morte' ? (i.morte ? 'sim' : 'nao') : (i[c] ?? '');
-const nomeCampo = (c) => (c === 'coletadoEm' ? 'coletado_em' : c);
+const nomeCampo = (c) => ({ coletadoEm: 'coletado_em', mun: 'municipio', regiaoRJ: 'regiao_rj' }[c] || c);
 function baixar(blob, ext) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -421,7 +417,7 @@ $('relatorio').onclick = async () => {
   const de = $('de').value, ate = $('ate').value;
   const br = (d) => d.split('-').reverse().join('/');
   const periodo = de || ate ? `${de ? br(de) : 'início'} a ${ate ? br(ate) : 'hoje'}` : $('periodo').selectedOptions[0].textContent.trim();
-  const html = gerarRelatorio(noPeriodo(), { escopo: ufSel ? (UF_NOME[ufSel] || ufSel) : 'Brasil', periodo, fontes: dados.status.filter((s) => s.ok).length, atualizadoEm: dados.atualizadoEm });
+  const html = gerarRelatorio(noPeriodo(), { escopo: ufSel ? ufSel + ' (RJ)' : 'Estado do Rio de Janeiro', periodo, fontes: dados.status.filter((s) => s.ok).length, atualizadoEm: dados.atualizadoEm });
   if (!w) return alert('Permita pop-ups para abrir o relatório.');
   w.document.open(); w.document.write(html); w.document.close();
 };

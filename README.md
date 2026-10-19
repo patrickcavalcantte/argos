@@ -1,18 +1,18 @@
 # Argos
 
-Monitor de notícias de segurança pública no Brasil. O Argos reúne dezenas de fontes num painel único, filtra o que é segurança pública, classifica cada notícia e agrupa as repetições do mesmo caso, transformando o fluxo disperso de notícias de crime em dados comparáveis.
+Monitor de notícias de segurança pública no **estado do Rio de Janeiro** (capital e demais regiões). O Argos reúne dezenas de fontes num painel único, filtra o que é segurança pública, classifica cada notícia e agrupa as repetições do mesmo caso, transformando o fluxo disperso de notícias de crime em dados comparáveis.
 
 **Painel online:** https://patrickcavalcantte.github.io/argos/
 
 ## O que ele faz
 
-- **Coleta** 57 fontes: grandes portais, mídia independente, 24 veículos regionais do estado do Rio de Janeiro (por região) e buscas no Google Notícias.
+- **Coleta** 57 fontes: grandes portais, mídia independente, 24 veículos regionais do estado do Rio de Janeiro (por região) e buscas no Google Notícias. Por enquanto, só entram as notícias que se referem ao RJ; as de outros estados são descartadas.
 - **Filtra** o que é segurança pública (por palavras-chave) e descarta política partidária e notícias do exterior.
-- **Classifica** cada notícia por tipo de crime, arma envolvida, estado e região, e se houve morte.
+- **Classifica** cada notícia por tipo de crime, arma envolvida, município (92 do RJ), região do estado e se houve morte.
 - **Agrupa duplicatas:** várias matérias sobre o mesmo fato contam como um único caso.
 - **Painel** com lista de notícias, busca, filtros por fonte, favoritos e "não lidos".
-- **Análise** por tipo de crime, arma, estado, região e dia, mais a evolução mensal de casos.
-- **Relatório preliminar** com um clique: síntese, panorama por crime/arma/região/dia, casos com morte e metodologia, para o estado e período escolhidos, pronto para imprimir ou salvar em PDF.
+- **Análise** por tipo de crime, arma, município, região do estado e dia, mais a evolução mensal de casos.
+- **Relatório preliminar** com um clique: síntese, panorama por crime/arma/região/dia, casos com morte e metodologia, para o município (ou o estado todo) e período escolhidos, pronto para imprimir ou salvar em PDF.
 - **Exporta** o período escolhido em **CSV** ou **XLSX** (com links clicáveis nas notícias).
 
 ## Como funciona online
@@ -28,7 +28,7 @@ GitHub Actions (todo dia, 06h Brasília)
 
 - O workflow `.github/workflows/coletar.yml` roda uma vez por dia (e manualmente, em **Actions → Coletar e publicar → Run workflow**).
 - As notícias dos **últimos 30 dias** ficam em `data/noticias.json`, que o painel carrega direto. As mais antigas, **até 1 ano**, ficam em arquivos por mês (`data/arquivo/AAAA-MM.json`), baixados só quando você escolhe um período mais antigo ou "Todo o período". Depois de 1 ano, só sobram as contagens.
-- As **contagens diárias** (casos, mortes e totais por estado, tipo de crime e arma) são acumuladas sem limite, mesmo depois que as notícias saem do ar (`data/contagens.json`). Elas alimentam o gráfico "Casos por mês" da aba Análise.
+- As **contagens diárias** (casos, mortes e totais por município, tipo de crime e arma) são acumuladas sem limite, mesmo depois que as notícias saem do ar (`data/contagens.json`). Elas alimentam o gráfico "Casos por mês" da aba Análise.
 - A branch `gh-pages` recebe sempre um único commit, sobrescrito a cada coleta, então o repositório não cresce.
 - O painel online é estático: não há servidor, nem botão "Atualizar", nem login. Todo o conteúdo é público.
 
@@ -81,8 +81,8 @@ Para começar com histórico, rode `node coletar.js <pasta>/data --semente histo
 | `xlsx.js` | gerador de XLSX sem dependências, usado no navegador |
 | `relatorio.js` | gerador do relatório preliminar (HTML para imprimir / salvar em PDF) |
 | `feeds.json` | fontes monitoradas |
-| `analise.py` | classificação por palavras-chave (crime, arma, estado, duplicatas) |
-| `municipios.json` | municípios, para identificar o estado pelo texto |
+| `analise.py` | classificação por palavras-chave (crime, arma, município do RJ, duplicatas) |
+| `municipios.json` | municípios, para identificar o estado pelo texto (o município do RJ vem de uma lista própria em `analise.py`) |
 | `coletar.js` | coleta única, usada pelo GitHub Actions (também monta o arquivo mensal) |
 | `dados.js` | formato dos dados publicados e cálculo das contagens |
 | `server.js` | servidor local |
@@ -92,6 +92,6 @@ Para começar com histórico, rode `node coletar.js <pasta>/data --semente histo
 ## Limitações
 
 - A classificação é feita por **palavras-chave** sobre título e resumo. É uma estimativa, **não estatística oficial**: pode errar o tipo de crime, o estado ou a existência de morte.
-- Notícias sem local identificável ficam de fora dos gráficos por estado.
+- Notícias que não citam o município ficam de fora do recorte municipal (mas contam no estado, quando vêm de veículo do RJ).
 - O RSS dos portais mostra só as notícias mais recentes. Com coleta diária, um portal que publica muito pode ter itens que passam sem ser coletados.
 - O conteúdo das notícias pertence aos veículos de origem. O Argos guarda apenas título, resumo curto e link, e o painel leva o leitor à matéria original.
