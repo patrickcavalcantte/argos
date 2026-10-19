@@ -18,55 +18,112 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<script>try{var t=JSON.parse(localStorage.getItem("tema"));if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
   :root {
-    --bg: #ffffff; --painel: #f6f7f9; --borda: #e3e6ea; --texto: #1b1f24; --suave: #6b7480;
-    --destaque: #c0392b; --sel: #e8ebef; --link: #1b1f24;
+    --bg: #ffffff; --painel: #f5f6f8; --borda: #e6e8ec; --texto: #1d2733; --suave: #76808d;
+    --destaque: #c0392b; --sel: #eceff3; --link: #1d2733; --ativo: #fdf0ee; --sombra: 0 8px 24px rgba(20,30,50,.14);
+    color-scheme: light;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #14171b; --painel: #1b1f24; --borda: #2a3037; --texto: #e6e9ed; --suave: #8a94a1; --sel: #262c33; --link: #e6e9ed; }
+  :root[data-theme="dark"] {
+    --bg: #14171b; --painel: #1b1f24; --borda: #2a3037; --texto: #e6e9ed; --suave: #8a94a1;
+    --sel: #262c33; --link: #e6e9ed; --ativo: #34211f; --sombra: 0 8px 24px rgba(0,0,0,.55);
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--texto); height: 100vh; display: flex; }
-  aside { width: 260px; background: var(--painel); border-right: 1px solid var(--borda); padding: 16px 12px; overflow-y: auto; flex-shrink: 0; }
-  aside h1 { font-size: 20px; margin: 0 8px 14px; letter-spacing: -.3px; }
-  aside h1 span { color: var(--destaque); }
-  .busca { width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); font: inherit; margin-bottom: 12px; }
-  .item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; color: var(--texto); }
-  .item:hover { background: var(--sel); }
-  .item.ativo { background: var(--sel); font-weight: 600; }
-  .item .n { color: var(--suave); font-size: 13px; font-variant-numeric: tabular-nums; }
-  .item.erro { color: var(--suave); text-decoration: line-through; }
-  .item.grupo { margin-top: 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); font-weight: 600; }
-  .item.sub { padding-left: 20px; }
-  .sep { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); margin: 16px 10px 6px; }
-  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--borda); flex-wrap: wrap; }
-  header h2 { margin: 0; font-size: 17px; flex: 1; }
-  header .meta { color: var(--suave); font-size: 13px; }
-  input[type=date] { font: inherit; padding: 5px 8px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); }
-  button, select { font: inherit; padding: 6px 12px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); cursor: pointer; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--texto); height: 100vh; display: grid; grid-template-columns: 240px 400px 1fr; overflow: hidden; }
+  body.analise { grid-template-columns: 240px 1fr; }
+  body.analise #leitor { display: none; }
+  button, select, input[type=date] { font: inherit; color: var(--texto); background: var(--bg); border: 1px solid var(--borda); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  input[type=date] { cursor: text; padding: 5px 8px; }
   button:hover { background: var(--sel); }
-  #lista { overflow-y: auto; flex: 1; }
-  .post { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; padding: 12px 20px; border-bottom: 1px solid var(--borda); align-items: baseline; }
-  .post:hover { background: var(--painel); }
-  .post a { color: var(--link); text-decoration: none; font-weight: 600; }
-  .post.lido a { font-weight: 400; color: var(--suave); }
-  .post a:hover { text-decoration: underline; }
-  .post .fonte { font-size: 12px; color: var(--suave); }
-  .post .hora { font-size: 13px; color: var(--suave); text-align: right; white-space: nowrap; }
-  .post .acoes { grid-column: 2; grid-row: 2; text-align: right; }
-  .estrela { cursor: pointer; color: var(--suave); font-size: 18px; background: none; border: none; padding: 0 4px; }
-  .estrela.on { color: #e0a800; }
-  .vazio { padding: 40px 20px; color: var(--suave); text-align: center; }
-  .dia { padding: 8px 20px; background: var(--painel); font-size: 12px; font-weight: 600; color: var(--suave); position: sticky; top: 0; border-bottom: 1px solid var(--borda); }
-  .abas { display: flex; }
-  .abas button { border-radius: 0; margin: 0; }
+  button:disabled { opacity: .6; cursor: default; }
+
+  /* Navegação */
+  #nav { background: var(--painel); border-right: 1px solid var(--borda); display: flex; flex-direction: column; min-height: 0; }
+  #nav .topo { padding: 16px 16px 10px; }
+  #nav h1 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.3px; color: var(--destaque); }
+  .busca { width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); font: inherit; }
+  #menu { flex: 1; overflow-y: auto; padding: 4px 8px 12px; }
+  .item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+  .item:hover { background: var(--sel); }
+  .item.ativo { background: var(--ativo); font-weight: 600; }
+  .item .n { color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .item.erro { color: var(--suave); text-decoration: line-through; }
+  .item.grupo::before { content: '▸'; color: var(--suave); width: 14px; flex: none; transition: transform .15s; }
+  .item.grupo.aberto::before { transform: rotate(90deg); }
+  .item.grupo span:first-child { flex: 1; }
+  .item.sub { padding-left: 30px; font-size: 13px; }
+  .sep { height: 1px; background: var(--borda); margin: 8px 6px; }
+  #nav .rodape { border-top: 1px solid var(--borda); padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  #nav .rodape button { flex: 1; font-size: 13px; padding: 6px 8px; }
+
+  /* Lista */
+  #coluna { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--borda); }
+  body.analise #coluna { border-right: 0; }
+  .cab { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; }
+  .cab .tit-col { flex: 1; min-width: 0; }
+  .cab h2 { margin: 0; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta { color: var(--suave); font-size: 12px; }
+  .abas { display: flex; flex: none; }
+  .abas button { border-radius: 0; margin: 0; padding: 5px 12px; font-size: 13px; }
   .abas button:first-child { border-radius: 8px 0 0 8px; }
   .abas button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
   .abas button.on { background: var(--sel); font-weight: 600; }
-  .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--sel); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 13px; text-transform: none; letter-spacing: 0; }
+  .ferr { display: flex; gap: 8px; align-items: center; padding: 8px 16px 10px; border-bottom: 1px solid var(--borda); position: relative; }
+  .ferr .esp { flex: 1; }
+  .ferr button { font-size: 13px; padding: 4px 10px; }
+  .badge { display: inline-block; min-width: 16px; padding: 0 5px; margin-left: 4px; border-radius: 999px; background: var(--destaque); color: #fff; font-size: 11px; text-align: center; }
+  .badge[hidden] { display: none; }
+  .pop { position: absolute; z-index: 20; top: calc(100% + 4px); background: var(--bg); border: 1px solid var(--borda); border-radius: 12px; box-shadow: var(--sombra); padding: 12px; display: none; min-width: 230px; }
+  .pop.aberto { display: block; }
+  .pop label { display: block; font-size: 12px; color: var(--suave); margin: 8px 0 3px; }
+  .pop label:first-child { margin-top: 0; }
+  .pop select, .pop input { width: 100%; }
+  .pop .duas-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pop.filtros { left: 16px; }
+  .pop.exportar { right: 16px; padding: 6px; min-width: 190px; }
+  .pop.exportar button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; }
+  .pop.exportar button:hover { background: var(--sel); }
+  #lista { overflow-y: auto; flex: 1; }
+  .post { padding: 11px 16px 11px 30px; border-bottom: 1px solid var(--borda); cursor: pointer; position: relative; }
+  .post::before { content: ''; position: absolute; left: 13px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--destaque); }
+  .post.lido::before { display: none; }
+  .post:hover { background: var(--painel); }
+  .post.sel { background: var(--ativo); }
+  .post .l1 { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--suave); margin-bottom: 2px; }
+  .post .l1 .fonte { font-weight: 600; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .post .l1 .fav { margin-left: auto; color: #e0a800; }
+  .post .tit { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .post.lido .tit { font-weight: 400; color: var(--suave); }
+  .dia { padding: 8px 16px; background: var(--painel); font-size: 12px; color: var(--suave); border-bottom: 1px solid var(--borda); }
+  .vazio { padding: 40px 20px; color: var(--suave); text-align: center; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--sel); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 13px; }
   .chip button { border: 0; background: none; padding: 0 8px; }
+
+  /* Leitor */
+  #leitor { overflow-y: auto; min-width: 0; background: var(--bg); }
+  .artigo { max-width: 680px; margin: 0 auto; padding: 32px 28px 64px; }
+  .artigo .origem { color: var(--suave); font-size: 13px; }
+  .artigo h1 { font-size: 26px; line-height: 1.25; margin: 8px 0 14px; letter-spacing: -.3px; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tag { background: var(--sel); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+  .tag.morte { background: var(--ativo); color: var(--destaque); font-weight: 600; }
+  .artigo .resumo { font-size: 16px; line-height: 1.65; }
+  .acoes-art { display: flex; gap: 8px; margin: 22px 0 6px; flex-wrap: wrap; }
+  .primario { background: var(--destaque); color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 8px; display: inline-block; }
+  .primario:hover { filter: brightness(1.08); }
+  .nota-art { color: var(--suave); font-size: 12px; }
+  .relac { margin-top: 28px; border-top: 1px solid var(--borda); padding-top: 14px; }
+  .relac h3 { font-size: 13px; margin: 0 0 8px; color: var(--suave); text-transform: uppercase; letter-spacing: .05em; }
+  .relac a { display: block; color: var(--texto); text-decoration: none; padding: 5px 0; }
+  .relac a:hover { text-decoration: underline; }
+  .relac span { color: var(--suave); font-size: 12px; }
+  .vazio-leitor { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--suave); gap: 6px; }
+  .vazio-leitor b { font-size: 40px; color: var(--destaque); opacity: .35; }
+  .so-mobile { display: none; }
+
+  /* Análise */
   #analise { overflow-y: auto; flex: 1; padding: 20px; display: none; }
   .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
   .cartao { border: 1px solid var(--borda); border-radius: 12px; padding: 16px; background: var(--bg); }
@@ -84,39 +141,68 @@
   .kpi { border: 1px solid var(--borda); border-radius: 12px; padding: 12px 18px; min-width: 130px; }
   .kpi b { display: block; font-size: 24px; }
   .kpi span { color: var(--suave); font-size: 12px; }
-  @media (max-width: 720px) { body { flex-direction: column; } aside { width: 100%; max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--borda); } }
+
+  @media (max-width: 1100px) { body { grid-template-columns: 220px 340px 1fr; } }
+  @media (max-width: 860px) {
+    body, body.analise { grid-template-columns: 1fr; }
+    .so-mobile { display: inline-block; }
+    #nav { position: fixed; z-index: 30; inset: 0 auto 0 0; width: 280px; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--sombra); }
+    body.menu-aberto #nav { transform: none; }
+    #leitor, body.analise #leitor { position: fixed; inset: 0; z-index: 25; display: none; }
+    body.lendo #leitor { display: block; }
+    body.analise.lendo #leitor { display: none; }
+    .pop.exportar { right: 8px; } .pop.filtros { left: 8px; }
+  }
 </style>
 </head>
 <body>
-<aside>
-  <h1><span>Argos</span></h1>
-  <input class="busca" id="busca" type="search" placeholder="Buscar nas notícias…">
+<aside id="nav">
+  <div class="topo">
+    <h1>Argos</h1>
+    <input class="busca" id="busca" type="search" placeholder="Buscar nas notícias…">
+  </div>
   <div id="menu"></div>
-</aside>
-<main>
-  <header>
-    <h2 id="titulo">Todos os posts</h2>
-    <span class="meta" id="meta"></span>
-    <div class="abas"><button id="aba-lista" class="on">Notícias</button><button id="aba-analise">Análise</button></div>
-    <select id="periodo">
-      <option value="0">Todo o período (30 dias)</option>
-      <option value="86400000">Últimas 24 h</option>
-      <option value="259200000">Últimos 3 dias</option>
-      <option value="604800000" selected>Últimos 7 dias</option>
-      <option value="1296000000">Últimos 15 dias</option>
-    </select>
-    <select id="uf" title="Filtrar por município do Rio de Janeiro"><option value="">Todos os municípios</option></select>
-    <label class="meta">De <input type="date" id="de"></label>
-    <label class="meta">até <input type="date" id="ate"></label>
-    <button id="marcar">Marcar como lidos</button>
-    <button id="csv" title="Baixar os dados classificados">Exportar CSV</button>
-    <button id="xlsx" title="Planilha Excel com links clicáveis">Exportar XLSX</button>
-    <button id="relatorio" title="Relatório preliminar do período e município escolhidos, pronto para imprimir ou salvar em PDF">Relatório</button>
+  <div class="rodape">
+    <button id="tema" title="Alternar entre tema claro e escuro">Tema</button>
     <button id="atualizar">Atualizar</button>
-  </header>
+  </div>
+</aside>
+<section id="coluna">
+  <div class="cab">
+    <button id="abrirmenu" class="so-mobile" title="Menu">☰</button>
+    <div class="tit-col"><h2 id="titulo">Todos os posts</h2><div class="meta" id="meta"></div></div>
+    <div class="abas"><button id="aba-lista" class="on">Notícias</button><button id="aba-analise">Análise</button></div>
+  </div>
+  <div class="ferr">
+    <button id="bfiltros">Filtros<span class="badge" id="nfiltros" hidden></span></button>
+    <span class="esp"></span>
+    <button id="marcar" title="Marcar como lidas as notícias da lista">Marcar como lidos</button>
+    <button id="bexportar">Exportar ▾</button>
+    <div class="pop filtros" id="pfiltros">
+      <label for="periodo">Período</label>
+      <select id="periodo">
+        <option value="0">Todo o período (30 dias)</option>
+        <option value="86400000">Últimas 24 h</option>
+        <option value="259200000">Últimos 3 dias</option>
+        <option value="604800000" selected>Últimos 7 dias</option>
+        <option value="1296000000">Últimos 15 dias</option>
+      </select>
+      <label for="uf">Município do RJ</label>
+      <select id="uf"><option value="">Todos os municípios</option></select>
+      <label>Ou escolha as datas</label>
+      <div class="duas-datas"><input type="date" id="de" title="De"><input type="date" id="ate" title="Até"></div>
+      <label><button id="limpar" style="width:100%">Limpar filtros</button></label>
+    </div>
+    <div class="pop exportar" id="pexportar">
+      <button id="csv" title="Baixar os dados classificados">Planilha CSV</button>
+      <button id="xlsx" title="Planilha Excel com links clicáveis">Planilha Excel (XLSX)</button>
+      <button id="relatorio" title="Relatório preliminar do período e município escolhidos, pronto para imprimir ou salvar em PDF">Relatório (PDF)</button>
+    </div>
+  </div>
   <div id="lista"></div>
   <div id="analise"></div>
-</main>
+</section>
+<section id="leitor"></section>
 <script src="xlsx.js"></script>
 <script src="relatorio.js"></script>
 <script>
@@ -202,20 +288,6 @@ async function garantirArquivo() {
   montarEstados(); lista();
 }
 
-function menu() {
-  const naoLidos = dados.itens.filter((i) => !lidos.has(i.id)).length;
-  const linha = (tipo, valor, nome, n, cls = '') =>
-    `<div class="item ${cls} ${filtro.tipo === tipo && filtro.valor === valor ? 'ativo' : ''}" data-tipo="${tipo}" data-valor="${valor ?? ''}"><span>${esc(nome)}</span><span class="n">${n ?? ''}</span></div>`;
-  $('menu').innerHTML =
-    linha('todos', null, 'Todos os posts', dados.itens.length) +
-    linha('naolidos', null, 'Não lidos', naoLidos) +
-    linha('favoritos', null, '★ Favoritados', favoritos.size) +
-    [...new Set(dados.status.map((s) => s.grupo))].map((g) =>
-      `<div class="item grupo ${filtro.tipo === 'grupo' && filtro.valor === g ? 'ativo' : ''}" data-tipo="grupo" data-valor="${esc(g)}"><span>${esc(g)}</span><span class="n">${dados.itens.filter((i) => i.grupo === g).length}</span></div>` +
-      dados.status.filter((s) => s.grupo === g).map((s) => linha('fonte', s.id, s.nome, s.ok ? dados.itens.filter((i) => i.fonteId === s.id).length : '✕', 'sub ' + (s.ok ? '' : 'erro'))).join('')
-    ).join('');
-}
-
 function hora(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -297,27 +369,56 @@ function analise() {
     <div class="aviso">A classificação é feita por palavras-chave (script analise.py) sobre título e resumo; é uma estimativa, não estatística oficial.</div>`;
 }
 
+// ---- Navegação lateral: grupos recolhidos; as fontes aparecem ao abrir o grupo
+const abertos = new Set();
+function menu() {
+  const naoLidos = dados.itens.filter((i) => !lidos.has(i.id)).length;
+  const linha = (tipo, valor, nome, n, cls = '') =>
+    `<div class="item ${cls} ${filtro.tipo === tipo && filtro.valor === valor ? 'ativo' : ''}" data-tipo="${tipo}" data-valor="${esc(valor ?? '')}"><span>${esc(nome)}</span><span class="n">${n ?? ''}</span></div>`;
+  const porGrupo = {}, porFonte = {};
+  for (const i of dados.itens) { porGrupo[i.grupo] = (porGrupo[i.grupo] || 0) + 1; porFonte[i.fonteId] = (porFonte[i.fonteId] || 0) + 1; }
+  $('menu').innerHTML =
+    linha('todos', null, 'Todos os posts', dados.itens.length) +
+    linha('naolidos', null, 'Não lidos', naoLidos) +
+    linha('favoritos', null, '★ Favoritados', favoritos.size) +
+    '<div class="sep"></div>' +
+    [...new Set(dados.status.map((s) => s.grupo))].map((g) =>
+      `<div class="item grupo ${abertos.has(g) ? 'aberto' : ''} ${filtro.tipo === 'grupo' && filtro.valor === g ? 'ativo' : ''}" data-tipo="grupo" data-valor="${esc(g)}"><span>${esc(g)}</span><span class="n">${porGrupo[g] || 0}</span></div>` +
+      (abertos.has(g) ? dados.status.filter((s) => s.grupo === g).map((s) => linha('fonte', s.id, s.nome, s.ok ? porFonte[s.id] || 0 : '✕', 'sub ' + (s.ok ? '' : 'erro'))).join('') : '')
+    ).join('');
+}
+
+const relativo = (iso) => {
+  if (!iso) return '';
+  const min = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (min < 1) return 'agora';
+  if (min < 60) return `${min} min`;
+  if (min < 1440) return `${Math.round(min / 60)} h`;
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+};
+
+// A lista esconde as repetições do mesmo caso (aparecem no leitor, em "Mesmo caso em outros veículos"); as exportações levam tudo
+const paraLista = () => visiveis().filter((i) => !i.dup);
+
 function lista() {
+  document.body.classList.toggle('analise', visao === 'analise');
   $('lista').style.display = visao === 'lista' ? '' : 'none';
   $('analise').style.display = visao === 'analise' ? 'block' : 'none';
   $('aba-lista').classList.toggle('on', visao === 'lista');
   $('aba-analise').classList.toggle('on', visao === 'analise');
   $('marcar').style.display = visao === 'lista' ? '' : 'none';
+  badgeFiltros();
   if (visao === 'analise') { analise(); menu(); return meta(); }
-  const itens = visiveis();
-  let ultimoDia = '', html = '';
+  const itens = paraLista();
+  let html = '';
   const LIMITE = 500;
   for (const i of itens.slice(0, LIMITE)) {
-    const dia = diaRotulo(i.data);
-    if (dia !== ultimoDia) { html += `<div class="dia">${esc(dia)}</div>`; ultimoDia = dia; }
-    html += `<div class="post ${lidos.has(i.id) ? 'lido' : ''}">
-      <a href="${esc(i.link)}" target="_blank" rel="noopener" data-id="${esc(i.id)}">${esc(i.titulo)}</a>
-      <span class="hora">${hora(i.data)}</span>
-      <span class="fonte">${esc(i.fonte)}</span>
-      <span class="acoes"><button class="estrela ${favoritos.has(i.id) ? 'on' : ''}" data-fav="${esc(i.id)}" title="Favoritar">${favoritos.has(i.id) ? '★' : '☆'}</button></span>
+    html += `<div class="post ${lidos.has(i.id) ? 'lido' : ''} ${sel === i.id ? 'sel' : ''}" data-id="${esc(i.id)}">
+      <div class="l1"><span class="fonte">${esc(i.fonte)}</span><span>· ${relativo(i.data)}${i.mun ? ' · ' + esc(i.mun) : ''}</span>${favoritos.has(i.id) ? '<span class="fav">★</span>' : ''}</div>
+      <div class="tit">${esc(i.titulo)}</div>
     </div>`;
   }
-  if (itens.length > LIMITE) html += `<div class="vazio">Mostrando as ${LIMITE} mais recentes de ${itens.length}. Use a busca, o período ou os filtros para refinar, ou exporte o CSV com tudo.</div>`;
+  if (itens.length > LIMITE) html += `<div class="vazio">Mostrando as ${LIMITE} mais recentes de ${itens.length}. Use a busca ou os filtros para refinar, ou exporte a planilha com tudo.</div>`;
   html = (Object.keys(extra).length ? `<div class="dia">Filtros: ${chips()}</div>` : '') + html;
   const inicio = dados.itens.reduce((m, i) => (i.data && i.data < m ? i.data : m), '9');
   const antigo = $('ate').value && inicio.slice(0, 10) > $('ate').value; // período anterior ao que ainda está no ar
@@ -330,6 +431,55 @@ function lista() {
   $('titulo').textContent = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? (dados.status.find((s) => s.id === filtro.valor)?.nome ?? '') : nomes[filtro.tipo];
   meta(itens.length);
   menu();
+  if (sel && !itens.some((i) => i.id === sel)) renderLeitor(); // mantém o artigo aberto mesmo fora da lista
+}
+
+// ---- Leitor
+let sel = null;
+function renderLeitor() {
+  const i = sel && dados.itens.find((x) => x.id === sel);
+  if (!i) { $('leitor').innerHTML = '<div class="vazio-leitor"><b>A</b><span>Selecione uma notícia para ler</span></div>'; return; }
+  const dataTxt = i.data ? new Date(i.data).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' }) : '';
+  const tags = [...(i.cats || []).map((c) => `<span class="tag">${esc(c)}</span>`), i.morte ? `<span class="tag morte">Morte${i.arma ? ' · ' + esc(i.arma) : ''}</span>` : '',
+    i.mun ? `<span class="tag">${esc(i.mun)}</span>` : '', i.regiaoRJ ? `<span class="tag">${esc(i.regiaoRJ)}</span>` : ''].join('');
+  const relac = i.caso ? dados.itens.filter((x) => x.caso === i.caso && x.id !== i.id).sort((a, b) => (b.data || '').localeCompare(a.data || '')).slice(0, 8) : [];
+  $('leitor').innerHTML = `<article class="artigo">
+    <button id="voltar" class="so-mobile">‹ Voltar</button>
+    <div class="origem">${esc(i.fonte)} · ${esc(dataTxt)}</div>
+    <h1>${esc(i.titulo)}</h1>
+    <div class="tags">${tags}</div>
+    ${i.resumo ? `<p class="resumo">${esc(i.resumo)}</p>` : ''}
+    <div class="acoes-art">
+      <a class="primario" href="${esc(i.link)}" target="_blank" rel="noopener">Abrir matéria original ↗</a>
+      <button data-fav="${esc(i.id)}">${favoritos.has(i.id) ? '★ Favoritada' : '☆ Favoritar'}</button>
+      <button data-naolido="${esc(i.id)}">Marcar como não lida</button>
+    </div>
+    <div class="nota-art">O Argos mostra só título e resumo; a matéria completa está no site do veículo.</div>
+    ${relac.length ? `<div class="relac"><h3>Mesmo caso em outros veículos</h3>${relac.map((x) => `<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.titulo)}<br><span>${esc(x.fonte)} · ${relativo(x.data)}</span></a>`).join('')}</div>` : ''}
+  </article>`;
+  $('leitor').scrollTop = 0;
+}
+
+function selecionar(id) {
+  sel = id;
+  lidos.add(id); guardar('lidos', [...lidos]);
+  document.querySelectorAll('#lista .post').forEach((p) => { p.classList.toggle('sel', p.dataset.id === id); if (p.dataset.id === id) p.classList.add('lido'); });
+  document.body.classList.add('lendo');
+  renderLeitor(); menu();
+}
+
+function mover(passo) {
+  const itens = paraLista().slice(0, 500);
+  if (!itens.length) return;
+  const k = itens.findIndex((i) => i.id === sel);
+  const prox = itens[Math.min(itens.length - 1, Math.max(0, k + passo))];
+  selecionar(prox.id);
+  document.querySelector('#lista .post.sel')?.scrollIntoView({ block: 'nearest' });
+}
+
+function badgeFiltros() {
+  const n = (+$('periodo').value !== 604800000 && !$('de').value && !$('ate').value ? 1 : 0) + (ufSel ? 1 : 0) + ($('de').value || $('ate').value ? 1 : 0);
+  $('nfiltros').hidden = !n; $('nfiltros').textContent = n;
 }
 
 function meta(n) {
@@ -356,6 +506,8 @@ async function carregar(forcar) {
 $('menu').onclick = (e) => {
   const el = e.target.closest('.item'); if (!el) return;
   filtro = { tipo: el.dataset.tipo, valor: el.dataset.valor || null };
+  if (filtro.tipo === 'grupo') abertos.has(filtro.valor) ? abertos.delete(filtro.valor) : abertos.add(filtro.valor);
+  document.body.classList.remove('menu-aberto');
   lista();
 };
 $('aba-lista').onclick = () => { visao = 'lista'; lista(); };
@@ -424,15 +576,38 @@ $('relatorio').onclick = async () => {
 $('atualizar').onclick = () => carregar(true);
 $('marcar').onclick = () => { visiveis().forEach((i) => lidos.add(i.id)); guardar('lidos', [...lidos]); lista(); };
 $('lista').onclick = (e) => {
+  const p = e.target.closest('.post');
+  if (p) selecionar(p.dataset.id);
+};
+$('leitor').onclick = (e) => {
   const fav = e.target.closest('[data-fav]');
   if (fav) {
     const id = fav.dataset.fav;
     favoritos.has(id) ? favoritos.delete(id) : favoritos.add(id);
-    guardar('favoritos', [...favoritos]); return lista();
+    guardar('favoritos', [...favoritos]); renderLeitor(); return lista();
   }
-  const a = e.target.closest('a[data-id]');
-  if (a) { lidos.add(a.dataset.id); guardar('lidos', [...lidos]); a.closest('.post').classList.add('lido'); menu(); }
+  const nl = e.target.closest('[data-naolido]');
+  if (nl) { lidos.delete(nl.dataset.naolido); guardar('lidos', [...lidos]); return lista(); }
+  if (e.target.closest('#voltar')) document.body.classList.remove('lendo');
 };
+$('abrirmenu').onclick = (e) => { e.stopPropagation(); document.body.classList.toggle('menu-aberto'); };
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#nav, #abrirmenu')) document.body.classList.remove('menu-aberto');
+  for (const [pop, btn] of [['pfiltros', 'bfiltros'], ['pexportar', 'bexportar']]) {
+    if (e.target.closest('#' + btn)) $(pop).classList.toggle('aberto');
+    else if (!e.target.closest('#' + pop) || e.target.closest('#pexportar button')) $(pop).classList.remove('aberto');
+  }
+});
+$('limpar').onclick = () => { $('periodo').value = '604800000'; $('de').value = ''; $('ate').value = ''; ufSel = ''; $('uf').value = ''; lista(); };
+document.addEventListener('keydown', (e) => {
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.metaKey || e.ctrlKey || visao !== 'lista') return;
+  if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); mover(1); }
+  else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); mover(-1); }
+});
+const aplicarTema = (t) => { document.documentElement.dataset.theme = t; $('tema').textContent = t === 'dark' ? '☀ Tema claro' : '☾ Tema escuro'; };
+aplicarTema(document.documentElement.dataset.theme || 'light');
+$('tema').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; aplicarTema(t); guardar('tema', t); };
+renderLeitor();
 
 carregar(false);
 if (local) setInterval(() => carregar(false), 10 * 60 * 1000);
