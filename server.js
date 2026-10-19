@@ -5,7 +5,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const zlib = require('zlib');
 const path = require('path');
-const { CAMPOS_BRUTOS, DIAS_JANELA, quando, saida, naJanela, contar } = require('./dados');
+const { CAMPOS_BRUTOS, quando, saida, contar } = require('./dados');
 
 const PORTA = process.env.PORT || 3737;
 const INTERVALO_MS = 24 * 60 * 60 * 1000;
@@ -171,10 +171,10 @@ async function atualizar() {
   for (const s of cache.status.filter((s) => !s.ok)) console.log(`  falhou: ${s.nome} (${s.erro})`);
 }
 
-// Mesmo formato que o coletar.js publica no GitHub Pages: o painel funciona igual local e online
+// Mesmo formato que o coletar.js publica no GitHub Pages; só que localmente vai todo o histórico (sem janela de 30 dias)
 const payloadNoticias = () => ({
-  atualizadoEm: cache.atualizadoEm, janelaDias: DIAS_JANELA, status: cache.status,
-  itens: naJanela(cache.itens).map(saida),
+  atualizadoEm: cache.atualizadoEm, janelaDias: null, status: cache.status,
+  itens: cache.itens.map(saida),
 });
 
 const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };

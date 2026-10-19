@@ -1,5 +1,6 @@
 // Formato dos dados publicados (noticias.json / contagens.json), compartilhado por server.js e coletar.js
-const DIAS_JANELA = 30; // notícias ficam publicadas por 30 dias; as contagens diárias ficam para sempre
+const DIAS_JANELA = 30; // notícias recentes: carregadas direto no painel (noticias.json)
+const ARQUIVO_DIAS = 365; // notícias mais antigas ficam em arquivos por mês (arquivo/AAAA-MM.json), até 1 ano; as contagens diárias ficam para sempre
 
 const CAMPOS_BRUTOS = ['id', 'titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm'];
 // O link já serve de identificador, então 'id' não é publicado
@@ -9,8 +10,11 @@ const quando = (i) => i.data || i.coletadoEm || '';
 const bruto = (i) => Object.fromEntries(CAMPOS_BRUTOS.map((c) => [c, i[c] ?? null]));
 const saida = (i) => Object.fromEntries(CAMPOS_SAIDA.filter((c) => i[c] != null && i[c] !== false && !(Array.isArray(i[c]) && !i[c].length)).map((c) => [c, i[c]]));
 
-const limiteJanela = () => new Date(Date.now() - DIAS_JANELA * 86400000).toISOString();
+const limite = (dias) => new Date(Date.now() - dias * 86400000).toISOString();
+const limiteJanela = () => limite(DIAS_JANELA);
+const limiteArquivo = () => limite(ARQUIVO_DIAS);
 const naJanela = (itens) => { const lim = limiteJanela(); return itens.filter((i) => quando(i) >= lim); };
+const mesDe = (i) => quando(i).slice(0, 7);
 
 // Contagens por dia de publicação. Conta casos distintos (sem duplicatas), como o painel de análise.
 function contar(itens) {
@@ -27,4 +31,4 @@ function contar(itens) {
   return dias;
 }
 
-module.exports = { DIAS_JANELA, CAMPOS_BRUTOS, quando, bruto, saida, naJanela, contar };
+module.exports = { DIAS_JANELA, ARQUIVO_DIAS, CAMPOS_BRUTOS, quando, bruto, saida, limiteJanela, limiteArquivo, naJanela, mesDe, contar };

@@ -123,6 +123,7 @@ const $ = (id) => document.getElementById(id);
 const local = ['localhost', '127.0.0.1'].includes(location.hostname);
 if (!local) $('atualizar').style.display = 'none';
 let contagens = { dias: {} };
+let arquivo = { meses: new Set(), carregados: new Set(), promessas: {} }; // notícias de 30 dias a 1 ano, um arquivo por mês
 const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const ler = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 
@@ -175,6 +176,29 @@ function montarEstados() {
   const ufs = Object.keys(n).sort((a, b) => (UF_NOME[a] || a).localeCompare(UF_NOME[b] || b, 'pt-BR'));
   $('uf').innerHTML = '<option value="">Todos os estados</option>' + ufs.map((u) => `<option value="${u}">${esc(UF_NOME[u] || u)} (${n[u]})</option>`).join('');
   $('uf').value = ufs.includes(ufSel) ? ufSel : (ufSel = '');
+}
+
+// Meses do arquivo que o período escolhido precisa: com datas, os meses do intervalo; em "Todo o período", todos
+function mesesNecessarios() {
+  const todos = [...arquivo.meses].sort();
+  const de = $('de').value, ate = $('ate').value;
+  if (de || ate) return todos.filter((m) => (!de || m >= de.slice(0, 7)) && (!ate || m <= ate.slice(0, 7)));
+  return +$('periodo').value === 0 ? todos : [];
+}
+const faltaArquivo = () => mesesNecessarios().some((m) => !arquivo.carregados.has(m));
+
+function baixarMes(m) {
+  return (arquivo.promessas[m] ??= fetch(`data/arquivo/${m}.json`, { cache: 'no-cache' }).then((r) => r.json()).then((j) => {
+    j.itens.forEach((i) => { i.id = i.link; i.cats = i.cats || []; i.resumo = i.resumo || ''; });
+    for (const i of j.itens) dados.itens.push(i);
+    arquivo.carregados.add(m);
+  }).catch(() => { delete arquivo.promessas[m]; }));
+}
+
+async function garantirArquivo() {
+  if (!faltaArquivo()) return;
+  await Promise.all(mesesNecessarios().map(baixarMes));
+  montarEstados(); lista();
 }
 
 function menu() {
@@ -233,7 +257,7 @@ function tendencia() {
   const mesRot = (m) => new Date(m + '-15T12:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
   const pares = Object.entries(meses).sort().reverse().map(([m, n]) => [m, n, mesRot(m)]);
   const desde = dias.length ? new Date(dias[0][0] + 'T12:00').toLocaleDateString('pt-BR') : '';
-  return `<div class="cartao"><h3>Casos por mês (histórico)</h3><div class="sub">Contagem diária acumulada${desde ? ' desde ' + desde : ''}; as notícias em si ficam disponíveis só por ${dados.janelaDias || 30} dias.</div>${seletor}${barras(pares, 'mes', 12)}<div class="aviso">O mês mais recente pode estar incompleto.</div></div>`;
+  return `<div class="cartao"><h3>Casos por mês (histórico)</h3><div class="sub">Contagem diária acumulada${desde ? ' desde ' + desde : ''}${dados.janelaDias ? `; as notícias em si ficam disponíveis por ${dados.arquivoDias === 365 ? '1 ano' : dados.janelaDias + ' dias'}` : ''}.</div>${seletor}${barras(pares, 'mes', 12)}<div class="aviso">O mês mais recente pode estar incompleto.</div></div>`;
 }
 
 function analise() {
@@ -299,7 +323,11 @@ function lista() {
   html = (Object.keys(extra).length ? `<div class="dia">Filtros: ${chips()}</div>` : '') + html;
   const inicio = dados.itens.reduce((m, i) => (i.data && i.data < m ? i.data : m), '9');
   const antigo = $('ate').value && inicio.slice(0, 10) > $('ate').value; // período anterior ao que ainda está no ar
-  $('lista').innerHTML = html || `<div class="vazio">${antigo ? `As notícias desse período já saíram do ar: ficam disponíveis por ${dados.janelaDias || 30} dias. A contagem de casos continua no histórico mensal da aba Análise.` : 'Nenhuma notícia encontrada com esses filtros.'}</div>`;
+  const dias = dados.arquivoDias || dados.janelaDias || 30;
+  const vazio = faltaArquivo() ? 'Carregando o arquivo de notícias…'
+    : antigo ? `As notícias desse período já saíram do ar: ficam disponíveis por ${dias === 365 ? '1 ano' : dias + ' dias'}. A contagem de casos continua no histórico mensal da aba Análise.`
+    : 'Nenhuma notícia encontrada com esses filtros.';
+  $('lista').innerHTML = html || `<div class="vazio">${vazio}</div>`;
   const nomes = { todos: 'Todos os posts', naolidos: 'Não lidos', favoritos: 'Favoritados' };
   $('titulo').textContent = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? (dados.status.find((s) => s.id === filtro.valor)?.nome ?? '') : nomes[filtro.tipo];
   meta(itens.length);
@@ -317,11 +345,14 @@ async function carregar(forcar) {
     if (forcar) await fetch('api/atualizar');
     dados = await (await fetch('data/noticias.json', { cache: 'no-cache' })).json();
     dados.itens.forEach((i) => { i.id = i.link; i.cats = i.cats || []; i.resumo = i.resumo || ''; }); // o link é o identificador
+    arquivo = { meses: new Set(dados.arquivo || []), carregados: new Set(), promessas: {} };
+    $('periodo').options[0].textContent = dados.arquivoDias ? 'Todo o período (1 ano)' : 'Todo o período';
     montarEstados();
   } catch { $('meta').textContent = 'Dados indisponíveis'; }
   try { contagens = await (await fetch('data/contagens.json', { cache: 'no-cache' })).json(); } catch {}
   $('atualizar').disabled = false; $('atualizar').textContent = 'Atualizar';
   lista();
+  garantirArquivo();
 }
 
 $('menu').onclick = (e) => {
@@ -355,8 +386,8 @@ $('lista').addEventListener('click', (e) => {
   if (l) { delete extra[l.dataset.limpar]; lista(); }
 });
 $('busca').oninput = (e) => { termo = e.target.value; lista(); };
-$('periodo').onchange = () => { $('de').value = ''; $('ate').value = ''; lista(); };
-$('de').onchange = $('ate').onchange = () => lista();
+$('periodo').onchange = () => { $('de').value = ''; $('ate').value = ''; lista(); garantirArquivo(); };
+$('de').onchange = $('ate').onchange = () => { lista(); garantirArquivo(); };
 $('uf').onchange = () => { ufSel = $('uf').value; lista(); };
 
 // Exportações geradas no navegador, com o período escolhido na tela
@@ -370,12 +401,14 @@ function baixar(blob, ext) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
-$('csv').onclick = () => {
+$('csv').onclick = async () => {
+  await garantirArquivo();
   const celula = (v) => `"${String(v).replace(/"/g, '""').replace(/\s+/g, ' ')}"`;
   const linhas = noPeriodo().map((i) => CAMPOS.map((c) => celula(campo(i, c))).join(','));
   baixar(new Blob(['﻿' + [CAMPOS.map(nomeCampo).join(','), ...linhas].join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'csv'); // BOM: o Excel reconhece UTF-8
 };
 $('xlsx').onclick = async () => {
+  await garantirArquivo();
   const larguras = { data: 20, fonte: 22, grupo: 18, titulo: 70, resumo: 50, link: 45, categorias: 28, coletadoEm: 20 };
   const bytes = await gerarXlsx(CAMPOS.map(nomeCampo), noPeriodo().map((i) => CAMPOS.map((c) => campo(i, c))), CAMPOS.indexOf('link'), CAMPOS.map((c) => larguras[c] || 12));
   baixar(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'xlsx');

@@ -26,8 +26,8 @@ GitHub Actions (todo dia, 06h Brasília)
 ```
 
 - O workflow `.github/workflows/coletar.yml` roda uma vez por dia (e manualmente, em **Actions → Coletar e publicar → Run workflow**).
-- As notícias ficam disponíveis por **30 dias** (`data/noticias.json`). Quem precisar guardar mais deve exportar CSV/XLSX periodicamente.
-- Só as **contagens diárias** (casos, mortes e totais por estado, tipo de crime e arma) são acumuladas sem limite (`data/contagens.json`). Elas alimentam o gráfico "Casos por mês" da aba Análise.
+- As notícias dos **últimos 30 dias** ficam em `data/noticias.json`, que o painel carrega direto. As mais antigas, **até 1 ano**, ficam em arquivos por mês (`data/arquivo/AAAA-MM.json`), baixados só quando você escolhe um período mais antigo ou "Todo o período". Depois de 1 ano, só sobram as contagens.
+- As **contagens diárias** (casos, mortes e totais por estado, tipo de crime e arma) são acumuladas sem limite, mesmo depois que as notícias saem do ar (`data/contagens.json`). Elas alimentam o gráfico "Casos por mês" da aba Análise.
 - A branch `gh-pages` recebe sempre um único commit, sobrescrito a cada coleta, então o repositório não cresce.
 - O painel online é estático: não há servidor, nem botão "Atualizar", nem login. Todo o conteúdo é público.
 
@@ -42,7 +42,7 @@ node server.js
 Abre em http://localhost:3737. O servidor local:
 
 - busca os feeds ao iniciar e a cada 24 horas, e tem o botão **Atualizar**;
-- guarda o **histórico completo** em `historico.json` (não vai para o git);
+- guarda o **histórico completo** em `historico.json` (não vai para o git) e mostra tudo no painel, sem o limite de 1 ano;
 - usa a mesma tela e o mesmo formato de dados do painel online.
 
 Para preencher notícias antigas pelo Google Notícias: `node backfill.js [inicio] [fim]` (pare o servidor antes).
@@ -69,7 +69,7 @@ Alguns sites bloqueiam os IPs de datacenter do GitHub (erro 403). Nesse caso a f
 2. Em **Settings → Pages**, escolha a branch `gh-pages` (pasta `/`). Ela é criada na primeira execução do workflow.
 3. Em **Actions**, rode **Coletar e publicar** uma vez. Dali em diante ele roda sozinho todo dia.
 
-Para começar com histórico, rode `node coletar.js <pasta> --semente historico.json` e publique a pasta na `gh-pages` (as notícias da semente entram só pelos últimos 30 dias; as contagens, por todo o período).
+Para começar com histórico, rode `node coletar.js <pasta>/data --semente historico.json` e publique a pasta na `gh-pages` (as notícias da semente entram pelos últimos 30 dias e pelo arquivo de até 1 ano; as contagens, por todo o período).
 
 ## Estrutura
 
@@ -80,7 +80,7 @@ Para começar com histórico, rode `node coletar.js <pasta> --semente historico.
 | `feeds.json` | fontes monitoradas |
 | `analise.py` | classificação por palavras-chave (crime, arma, estado, duplicatas) |
 | `municipios.json` | municípios, para identificar o estado pelo texto |
-| `coletar.js` | coleta única, usada pelo GitHub Actions |
+| `coletar.js` | coleta única, usada pelo GitHub Actions (também monta o arquivo mensal) |
 | `dados.js` | formato dos dados publicados e cálculo das contagens |
 | `server.js` | servidor local |
 | `backfill.js` | preenche notícias antigas |
