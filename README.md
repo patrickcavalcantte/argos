@@ -6,7 +6,7 @@ Monitor de notícias de segurança pública no Brasil. O Argos reúne dezenas de
 
 ## O que ele faz
 
-- **Coleta** 31 fontes: grandes portais, mídia independente e buscas no Google Notícias.
+- **Coleta** 33 fontes: grandes portais, mídia independente e buscas no Google Notícias.
 - **Filtra** o que é segurança pública (por palavras-chave) e descarta política partidária e notícias do exterior.
 - **Classifica** cada notícia por tipo de crime, arma envolvida, estado e região, e se houve morte.
 - **Agrupa duplicatas:** várias matérias sobre o mesmo fato contam como um único caso.
