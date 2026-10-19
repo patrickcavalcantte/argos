@@ -5,7 +5,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const zlib = require('zlib');
 const path = require('path');
-const { gerarXlsx } = require('./xlsx');
+const { CAMPOS_BRUTOS, DIAS_JANELA, quando, saida, naJanela, contar } = require('./dados');
 
 const PORTA = process.env.PORT || 3737;
 const INTERVALO_MS = 24 * 60 * 60 * 1000;
@@ -84,7 +84,6 @@ let cache = { itens: [], status: [], stats: null, atualizadoEm: null };
 // Só guarda os campos brutos; a classificação é refeita a cada coleta, então melhorias no analise.py
 // valem também para o que já foi coletado.
 const ARQ_HISTORICO = process.env.HISTORICO || path.join(__dirname, 'historico.json');
-const CAMPOS_BRUTOS = ['id', 'titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm'];
 const historico = new Map();
 try {
   for (const i of JSON.parse(fs.readFileSync(ARQ_HISTORICO, 'utf8'))) historico.set(i.id, i);
@@ -97,7 +96,6 @@ function salvarHistorico() {
   fs.writeFileSync(tmp, JSON.stringify(lista));
   fs.renameSync(tmp, ARQ_HISTORICO); // troca atômica: um erro no meio não corrompe o arquivo
 }
-const quando = (i) => i.data || i.coletadoEm || '';
 
 // Chama analise.py: classifica as notícias (crime, arma, estado) e calcula estatísticas
 function analisar(itens) {
@@ -115,8 +113,9 @@ function analisar(itens) {
   });
 }
 
-async function atualizar() {
-  const resultados = await Promise.all(
+// Busca todas as fontes em paralelo; devolve [{ itens, status }]
+function buscarFeeds() {
+  return Promise.all(
     feeds.map(async (f) => {
       try {
         let texto;
@@ -147,6 +146,10 @@ async function atualizar() {
       }
     })
   );
+}
+
+async function atualizar() {
+  const resultados = await buscarFeeds();
   const agora = new Date().toISOString();
   const adicionadas = [];
   for (const i of resultados.flatMap((r) => r.itens)) {
@@ -168,83 +171,43 @@ async function atualizar() {
   for (const s of cache.status.filter((s) => !s.ok)) console.log(`  falhou: ${s.nome} (${s.erro})`);
 }
 
-const CAMPOS_CSV = ['data', 'fonte', 'grupo', 'titulo', 'resumo', 'link', 'uf', 'regiao', 'categorias', 'arma', 'morte', 'duplicata', 'caso', 'coletadoEm'];
-const celula = (v) => `"${String(v ?? '').replace(/"/g, '""').replace(/\s+/g, ' ')}"`;
+// Mesmo formato que o coletar.js publica no GitHub Pages: o painel funciona igual local e online
+const payloadNoticias = () => ({
+  atualizadoEm: cache.atualizadoEm, janelaDias: DIAS_JANELA, status: cache.status,
+  itens: naJanela(cache.itens).map(saida),
+});
 
-// Filtra por período: 'horas' (últimas N horas) ou intervalo 'de'/'ate' (AAAA-MM-DD)
-function noPeriodo(horas, de, ate) {
-  const limite = horas ? Date.now() - horas * 3600000 : 0;
-  return cache.itens
-    .filter((i) => !limite || new Date(quando(i)) >= limite)
-    .filter((i) => !de || quando(i).slice(0, 10) >= de)
-    .filter((i) => !ate || quando(i).slice(0, 10) <= ate);
-}
+const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
+const estatico = (res, arquivo) => {
+  res.writeHead(200, { 'Content-Type': TIPOS[path.extname(arquivo)] });
+  res.end(fs.readFileSync(path.join(__dirname, arquivo)));
+};
 
-// Só os campos que a tela usa (o link já serve de identificador)
-const CAMPOS_TELA = ['titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'cats', 'arma', 'uf', 'morte', 'dup'];
-const paraTela = (i) => Object.fromEntries(CAMPOS_TELA.filter((c) => i[c] != null && !(Array.isArray(i[c]) && !i[c].length)).map((c) => [c, i[c]]));
-
-function valorCampo(i, c) {
-  if (c === 'categorias') return (i.cats || []).join('; ');
-  if (c === 'duplicata' || c === 'morte') return (c === 'duplicata' ? i.dup : i.morte) ? 'sim' : 'nao';
-  return i[c];
-}
-const nomeCampo = (c) => (c === 'coletadoEm' ? 'coletado_em' : c);
-
-function gerarCsv(horas, de, ate) {
-  const linhas = noPeriodo(horas, de, ate).map((i) => CAMPOS_CSV.map((c) => celula(valorCampo(i, c))).join(','));
-  // BOM para o Excel reconhecer UTF-8
-  return '﻿' + [CAMPOS_CSV.map(nomeCampo).join(','), ...linhas].join('\r\n');
-}
-
-function gerarPlanilha(horas, de, ate) {
-  const larguras = { data: 20, fonte: 22, grupo: 18, titulo: 70, resumo: 50, link: 45, categorias: 28, coletadoEm: 20 };
-  return gerarXlsx(
-    CAMPOS_CSV.map(nomeCampo),
-    noPeriodo(horas, de, ate).map((i) => CAMPOS_CSV.map((c) => valorCampo(i, c) ?? '')),
-    CAMPOS_CSV.indexOf('link'),
-    CAMPOS_CSV.map((c) => larguras[c] || 12)
-  );
+function json(req, res, obj) {
+  const corpo = JSON.stringify(obj);
+  const cab = { 'Content-Type': 'application/json; charset=utf-8' };
+  if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
+    res.writeHead(200, { ...cab, 'Content-Encoding': 'gzip' });
+    return res.end(zlib.gzipSync(corpo));
+  }
+  res.writeHead(200, cab);
+  res.end(corpo);
 }
 
 const servidor = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
-  if (url.pathname === '/api/exportar.csv') {
-    const nome = `argos-${new Date().toISOString().slice(0, 10)}.csv`;
-    res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${nome}"` });
-    return res.end(gerarCsv(+url.searchParams.get('horas') || 0, url.searchParams.get('de') || '', url.searchParams.get('ate') || ''));
-  }
-  if (url.pathname === '/api/exportar.xlsx') {
-    const nome = `argos-${new Date().toISOString().slice(0, 10)}.xlsx`;
-    res.writeHead(200, { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${nome}"` });
-    return res.end(gerarPlanilha(+url.searchParams.get('horas') || 0, url.searchParams.get('de') || '', url.searchParams.get('ate') || ''));
-  }
-  if (url.pathname === '/api/noticias') {
-    const q = url.searchParams;
-    const itens = noPeriodo(+q.get('horas') || 0, q.get('de') || '', q.get('ate') || '').map(paraTela);
-    const corpo = JSON.stringify({ itens, total: cache.itens.length, status: cache.status, atualizadoEm: cache.atualizadoEm });
-    const cab = { 'Content-Type': 'application/json; charset=utf-8' };
-    if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
-      res.writeHead(200, { ...cab, 'Content-Encoding': 'gzip' });
-      return res.end(zlib.gzipSync(corpo));
-    }
-    res.writeHead(200, cab);
-    return res.end(corpo);
-  }
+  if (url.pathname === '/data/noticias.json') return json(req, res, payloadNoticias());
+  // Localmente as contagens vêm de todo o histórico em disco
+  if (url.pathname === '/data/contagens.json') return json(req, res, { atualizadoEm: cache.atualizadoEm, dias: contar(cache.itens) });
   if (url.pathname === '/api/atualizar') {
-    return atualizar().then(() => {
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify(cache));
-    });
+    return atualizar().then(() => json(req, res, { atualizadoEm: cache.atualizadoEm }));
   }
-  if (url.pathname === '/' || url.pathname === '/index.html') {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(fs.readFileSync(path.join(__dirname, 'index.html')));
-  }
+  if (url.pathname === '/' || url.pathname === '/index.html') return estatico(res, 'index.html');
+  if (url.pathname === '/xlsx.js') return estatico(res, 'xlsx.js');
   res.writeHead(404).end('Não encontrado');
 });
 
-module.exports = { parsear, feeds }; // reaproveitado por backfill.js
+module.exports = { parsear, feeds, buscarFeeds, analisar }; // reaproveitado por backfill.js e coletar.js
 
 if (require.main === module) {
   atualizar().then(() => servidor.listen(PORTA, () => console.log(`Aberto em http://localhost:${PORTA}`)));

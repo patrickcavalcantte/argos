@@ -85,11 +85,11 @@
     <span class="meta" id="meta"></span>
     <div class="abas"><button id="aba-lista" class="on">Notícias</button><button id="aba-analise">Análise</button></div>
     <select id="periodo">
-      <option value="0">Todo o período</option>
-      <option value="3600000">Última hora</option>
-      <option value="21600000">Últimas 6 h</option>
-      <option value="86400000" selected>Últimas 24 h</option>
-      <option value="604800000">Últimos 7 dias</option>
+      <option value="0">Todo o período (30 dias)</option>
+      <option value="86400000">Últimas 24 h</option>
+      <option value="259200000">Últimos 3 dias</option>
+      <option value="604800000" selected>Últimos 7 dias</option>
+      <option value="1296000000">Últimos 15 dias</option>
     </select>
     <label class="meta">De <input type="date" id="de"></label>
     <label class="meta">até <input type="date" id="ate"></label>
@@ -101,8 +101,13 @@
   <div id="lista"></div>
   <div id="analise"></div>
 </main>
+<script src="xlsx.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
+// Online (GitHub Pages) os dados são atualizados por uma coleta diária; só o servidor local tem o botão Atualizar
+const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+if (!local) $('atualizar').style.display = 'none';
+let contagens = { dias: {} };
 const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const ler = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 
@@ -119,15 +124,22 @@ const UF_NOME = { AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-function visiveis(semExtra) {
-  const de = $('de').value, ate = $('ate').value; // datas escolhidas manualmente substituem o seletor de período
+// Notícias do período escolhido (datas manuais substituem o seletor); é o que as exportações levam
+function noPeriodo() {
+  const de = $('de').value, ate = $('ate').value;
   const limite = de || ate ? 0 : +$('periodo').value;
   const agora = Date.now();
-  const q = norm(termo);
   return dados.itens.filter((i) => {
     if (limite && (!i.data || agora - new Date(i.data) > limite)) return false;
     if (de && (!i.data || i.data.slice(0, 10) < de)) return false;
     if (ate && (!i.data || i.data.slice(0, 10) > ate)) return false;
+    return true;
+  });
+}
+
+function visiveis(semExtra) {
+  const q = norm(termo);
+  return noPeriodo().filter((i) => {
     if (filtro.tipo === 'grupo' && i.grupo !== filtro.valor) return false;
     if (filtro.tipo === 'fonte' && i.fonteId !== filtro.valor) return false;
     if (filtro.tipo === 'naolidos' && lidos.has(i.id)) return false;
@@ -179,6 +191,26 @@ function barras(pares, chave, max) {
     `<div class="barra" data-filtro="${chave}" data-valor="${esc(nome)}" title="Ver notícias"><span class="rot">${esc(rot || nome)}</span><span class="trilho"><i style="width:${(n / m) * 100}%"></i></span><span class="val">${n}</span></div>`).join('') || '<div class="aviso">Sem dados neste período.</div>';
 }
 
+// Histórico longo: as notícias ficam só 30 dias no ar, mas as contagens diárias são acumuladas (contagens.json)
+let serie = ''; // '' = todos os casos, ou 'uf:SP' / 'cat:Roubo / furto'
+function tendencia() {
+  const dias = Object.entries(contagens.dias || {}).sort();
+  const [tipo, ...resto] = serie.split(':'), valor = resto.join(':');
+  const meses = {}, ufs = new Set(), cats = new Set();
+  for (const [d, v] of dias) {
+    Object.keys(v.uf || {}).forEach((u) => ufs.add(u));
+    Object.keys(v.cat || {}).forEach((c) => cats.add(c));
+    const m = d.slice(0, 7);
+    meses[m] = (meses[m] || 0) + (serie ? (v[tipo] || {})[valor] || 0 : v.casos);
+  }
+  const op = (v, rot) => `<option value="${esc(v)}" ${v === serie ? 'selected' : ''}>${esc(rot)}</option>`;
+  const seletor = `<select id="serie">${op('', 'Todos os casos')}<optgroup label="Estado">${[...ufs].sort().map((u) => op('uf:' + u, UF_NOME[u] || u)).join('')}</optgroup><optgroup label="Tipo de crime">${[...cats].sort().map((c) => op('cat:' + c, c)).join('')}</optgroup></select>`;
+  const mesRot = (m) => new Date(m + '-15T12:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+  const pares = Object.entries(meses).sort().reverse().map(([m, n]) => [m, n, mesRot(m)]);
+  const desde = dias.length ? new Date(dias[0][0] + 'T12:00').toLocaleDateString('pt-BR') : '';
+  return `<div class="cartao"><h3>Casos por mês (histórico)</h3><div class="sub">Contagem diária acumulada${desde ? ' desde ' + desde : ''}; as notícias em si ficam disponíveis só por ${dados.janelaDias || 30} dias.</div>${seletor}${barras(pares, 'mes', 12)}<div class="aviso">O mês mais recente pode estar incompleto.</div></div>`;
+}
+
 function analise() {
   const todas = visiveis(true);
   const itens = todas.filter((i) => !i.dup); // conta casos distintos, não notícias repetidas
@@ -213,6 +245,7 @@ function analise() {
       <div class="cartao"><h3>Estados com mais notícias</h3><div class="sub">Filtre por tipo de ocorrência:</div><select id="ufcat">${opcoes}</select>${barras(ord(ufs).map(([u, n]) => [u, n, UF_NOME[u] || u]), 'uf', 12)}<div class="aviso">${semUf} notícias sem local identificado ficam de fora.</div></div>
       <div class="cartao"><h3>Notícias por região</h3><div class="sub">${ufGrafico ? esc(ufGrafico) : 'Todas as categorias'}</div>${barras(ord(regs), 'regiao')}</div>
       <div class="cartao"><h3>Notícias por dia</h3><div class="sub">Volume de notícias coletadas.</div>${barras(Object.entries(dias).sort().reverse().map(([d, n]) => [d, n, diaRot(d)]), 'dia', 8)}</div>
+      ${tendencia()}
     </div>
     <div class="aviso">A classificação é feita por palavras-chave (script analise.py) sobre título e resumo; é uma estimativa, não estatística oficial.</div>`;
 }
@@ -247,19 +280,18 @@ function lista() {
 }
 
 function meta(n) {
-  const quando = dados.atualizadoEm ? new Date(dados.atualizadoEm).toLocaleTimeString('pt-BR') : '–';
-  $('meta').textContent = `${n ?? visiveis(true).length} notícias · atualizado às ${quando}`;
+  const quando = dados.atualizadoEm ? new Date(dados.atualizadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '–';
+  $('meta').textContent = `${n ?? visiveis(true).length} notícias · atualizado em ${quando}`;
 }
 
 async function carregar(forcar) {
   $('atualizar').disabled = true; $('atualizar').textContent = 'Atualizando…';
   try {
-    const de = $('de').value, ate = $('ate').value;
-    const params = de || ate ? `de=${de}&ate=${ate}` : `horas=${Math.round((+$('periodo').value || 0) / 3600000)}`;
-    if (forcar) await fetch('/api/atualizar');
-    dados = await (await fetch('/api/noticias?' + params)).json();
+    if (forcar) await fetch('api/atualizar');
+    dados = await (await fetch('data/noticias.json', { cache: 'no-cache' })).json();
     dados.itens.forEach((i) => { i.id = i.link; i.cats = i.cats || []; i.resumo = i.resumo || ''; }); // o link é o identificador
-  } catch { $('meta').textContent = 'Servidor indisponível'; }
+  } catch { $('meta').textContent = 'Dados indisponíveis'; }
+  try { contagens = await (await fetch('data/contagens.json', { cache: 'no-cache' })).json(); } catch {}
   $('atualizar').disabled = false; $('atualizar').textContent = 'Atualizar';
   lista();
 }
@@ -277,18 +309,39 @@ $('analise').onclick = (e) => {
   const { filtro: k, valor } = b.dataset;
   if (['cat', 'uf', 'arma'].includes(k)) { extra = { [k]: valor }; visao = 'lista'; lista(); }
 };
-$('analise').onchange = (e) => { if (e.target.id === 'ufcat') { ufGrafico = e.target.value; analise(); } };
+$('analise').onchange = (e) => {
+  if (e.target.id === 'ufcat') { ufGrafico = e.target.value; analise(); }
+  if (e.target.id === 'serie') { serie = e.target.value; analise(); }
+};
 $('lista').addEventListener('click', (e) => {
   const l = e.target.closest('[data-limpar]');
   if (l) { delete extra[l.dataset.limpar]; lista(); }
 });
 $('busca').oninput = (e) => { termo = e.target.value; lista(); };
-$('periodo').onchange = () => { $('de').value = ''; $('ate').value = ''; carregar(false); };
-$('de').onchange = $('ate').onchange = () => carregar(false);
-const exportar = (ext) => { const de = $('de').value, ate = $('ate').value;
-  location.href = `/api/exportar.${ext}?` + (de || ate ? `de=${de}&ate=${ate}` : 'horas=' + Math.round((+$('periodo').value || 0) / 3600000)); };
-$('csv').onclick = () => exportar('csv');
-$('xlsx').onclick = () => exportar('xlsx');
+$('periodo').onchange = () => { $('de').value = ''; $('ate').value = ''; lista(); };
+$('de').onchange = $('ate').onchange = () => lista();
+
+// Exportações geradas no navegador, com o período escolhido na tela
+const CAMPOS = ['data', 'fonte', 'grupo', 'titulo', 'resumo', 'link', 'uf', 'regiao', 'categorias', 'arma', 'morte', 'duplicata', 'caso', 'coletadoEm'];
+const campo = (i, c) => c === 'categorias' ? (i.cats || []).join('; ') : c === 'duplicata' ? (i.dup ? 'sim' : 'nao') : c === 'morte' ? (i.morte ? 'sim' : 'nao') : (i[c] ?? '');
+const nomeCampo = (c) => (c === 'coletadoEm' ? 'coletado_em' : c);
+function baixar(blob, ext) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `argos-${new Date().toISOString().slice(0, 10)}.${ext}`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+$('csv').onclick = () => {
+  const celula = (v) => `"${String(v).replace(/"/g, '""').replace(/\s+/g, ' ')}"`;
+  const linhas = noPeriodo().map((i) => CAMPOS.map((c) => celula(campo(i, c))).join(','));
+  baixar(new Blob(['﻿' + [CAMPOS.map(nomeCampo).join(','), ...linhas].join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'csv'); // BOM: o Excel reconhece UTF-8
+};
+$('xlsx').onclick = async () => {
+  const larguras = { data: 20, fonte: 22, grupo: 18, titulo: 70, resumo: 50, link: 45, categorias: 28, coletadoEm: 20 };
+  const bytes = await gerarXlsx(CAMPOS.map(nomeCampo), noPeriodo().map((i) => CAMPOS.map((c) => campo(i, c))), CAMPOS.indexOf('link'), CAMPOS.map((c) => larguras[c] || 12));
+  baixar(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'xlsx');
+};
 $('atualizar').onclick = () => carregar(true);
 $('marcar').onclick = () => { visiveis().forEach((i) => lidos.add(i.id)); guardar('lidos', [...lidos]); lista(); };
 $('lista').onclick = (e) => {
@@ -303,7 +356,7 @@ $('lista').onclick = (e) => {
 };
 
 carregar(false);
-setInterval(() => carregar(false), 10 * 60 * 1000); // os dados mudam uma vez por dia
+if (local) setInterval(() => carregar(false), 10 * 60 * 1000);
 </script>
 </body>
 </html>
