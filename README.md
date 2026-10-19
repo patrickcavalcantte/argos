@@ -12,6 +12,7 @@ Monitor de notícias de segurança pública no Brasil. O Argos reúne dezenas de
 - **Agrupa duplicatas:** várias matérias sobre o mesmo fato contam como um único caso.
 - **Painel** com lista de notícias, busca, filtros por fonte, favoritos e "não lidos".
 - **Análise** por tipo de crime, arma, estado, região e dia, mais a evolução mensal de casos.
+- **Relatório preliminar** com um clique: síntese, panorama por crime/arma/região/dia, casos com morte e metodologia, para o estado e período escolhidos, pronto para imprimir ou salvar em PDF.
 - **Exporta** o período escolhido em **CSV** ou **XLSX** (com links clicáveis nas notícias).
 
 ## Como funciona online
@@ -78,6 +79,7 @@ Para começar com histórico, rode `node coletar.js <pasta>/data --semente histo
 |---|---|
 | `index.html` | painel (lista, análise e exportações no navegador) |
 | `xlsx.js` | gerador de XLSX sem dependências, usado no navegador |
+| `relatorio.js` | gerador do relatório preliminar (HTML para imprimir / salvar em PDF) |
 | `feeds.json` | fontes monitoradas |
 | `analise.py` | classificação por palavras-chave (crime, arma, estado, duplicatas) |
 | `municipios.json` | municípios, para identificar o estado pelo texto |

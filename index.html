@@ -111,12 +111,14 @@
     <button id="marcar">Marcar como lidos</button>
     <button id="csv" title="Baixar os dados classificados">Exportar CSV</button>
     <button id="xlsx" title="Planilha Excel com links clicáveis">Exportar XLSX</button>
+    <button id="relatorio" title="Relatório preliminar do período e estado escolhidos, pronto para imprimir ou salvar em PDF">Relatório</button>
     <button id="atualizar">Atualizar</button>
   </header>
   <div id="lista"></div>
   <div id="analise"></div>
 </main>
 <script src="xlsx.js"></script>
+<script src="relatorio.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 // Online (GitHub Pages) os dados são atualizados por uma coleta diária; só o servidor local tem o botão Atualizar
@@ -412,6 +414,16 @@ $('xlsx').onclick = async () => {
   const larguras = { data: 20, fonte: 22, grupo: 18, titulo: 70, resumo: 50, link: 45, categorias: 28, coletadoEm: 20 };
   const bytes = await gerarXlsx(CAMPOS.map(nomeCampo), noPeriodo().map((i) => CAMPOS.map((c) => campo(i, c))), CAMPOS.indexOf('link'), CAMPOS.map((c) => larguras[c] || 12));
   baixar(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'xlsx');
+};
+$('relatorio').onclick = async () => {
+  const w = window.open('', '_blank'); // abre antes do await para não ser bloqueado como pop-up
+  await garantirArquivo();
+  const de = $('de').value, ate = $('ate').value;
+  const br = (d) => d.split('-').reverse().join('/');
+  const periodo = de || ate ? `${de ? br(de) : 'início'} a ${ate ? br(ate) : 'hoje'}` : $('periodo').selectedOptions[0].textContent.trim();
+  const html = gerarRelatorio(noPeriodo(), { escopo: ufSel ? (UF_NOME[ufSel] || ufSel) : 'Brasil', periodo, fontes: dados.status.filter((s) => s.ok).length, atualizadoEm: dados.atualizadoEm });
+  if (!w) return alert('Permita pop-ups para abrir o relatório.');
+  w.document.open(); w.document.write(html); w.document.close();
 };
 $('atualizar').onclick = () => carregar(true);
 $('marcar').onclick = () => { visiveis().forEach((i) => lidos.add(i.id)); guardar('lidos', [...lidos]); lista(); };
