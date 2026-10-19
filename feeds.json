@@ -50,7 +50,8 @@
     "grupo": "Grandes portais",
     "url": "https://extra.globo.com/rss/extra/",
     "filtrar": true,
-    "uf": "RJ"
+    "uf": "RJ",
+    "googleSite": "extra.globo.com"
   },
   {
     "id": "o-dia",
@@ -249,5 +250,211 @@
     "url": "https://news.google.com/rss/search?q=roubo%20OR%20assalto%20OR%20latroc%C3%ADnio%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "filtrar": false,
     "google": true
+  },
+  {
+    "id": "serranews",
+    "nome": "Serra News RJ",
+    "grupo": "RJ · Noroeste Fluminense",
+    "url": "https://www.serranewsrj.com.br/feed",
+    "googleSite": "serranewsrj.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "rj-interior",
+    "nome": "RJ Interior",
+    "grupo": "RJ · Noroeste Fluminense",
+    "url": "https://rjinterior.com.br/feed/",
+    "googleSite": "rjinterior.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "nf-noticias",
+    "nome": "NF Notícias",
+    "grupo": "RJ · Norte Fluminense",
+    "url": "https://www.nfnoticias.com.br/rss",
+    "googleSite": "nfnoticias.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "g1-norte-fluminense",
+    "nome": "g1 Norte Fluminense",
+    "grupo": "RJ · Norte Fluminense",
+    "googleSite": "g1.globo.com/rj/norte-fluminense",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "tribuna-nf",
+    "nome": "Tribuna NF",
+    "grupo": "RJ · Norte Fluminense",
+    "url": "https://www.tribunanf.com.br/feed/",
+    "googleSite": "tribunanf.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "diario-nf",
+    "nome": "Diário NF",
+    "grupo": "RJ · Norte Fluminense",
+    "googleSite": "diarionf.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "sf-noticias",
+    "nome": "SF Notícias",
+    "grupo": "RJ · Norte Fluminense",
+    "url": "https://sfnoticias.com.br/feed/",
+    "googleSite": "sfnoticias.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "a-tribuna-rj",
+    "nome": "A Tribuna RJ",
+    "grupo": "RJ · Baixadas Litorâneas",
+    "googleSite": "atribunarj.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "g1-lagos",
+    "nome": "g1 Região dos Lagos",
+    "grupo": "RJ · Baixadas Litorâneas",
+    "googleSite": "g1.globo.com/rj/regiao-dos-lagos",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "lagos-informa",
+    "nome": "Lagos Informa",
+    "grupo": "RJ · Baixadas Litorâneas",
+    "url": "https://lagosinforma.com.br/feed/",
+    "googleSite": "lagosinforma.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "fonte-certa",
+    "nome": "Fonte Certa",
+    "grupo": "RJ · Baixadas Litorâneas",
+    "url": "https://fontecerta.com/feed/",
+    "googleSite": "fontecerta.com",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "jornal-portal-lagos",
+    "nome": "Jornal Portal Lagos",
+    "grupo": "RJ · Baixadas Litorâneas",
+    "url": "https://jornalportallagos.com.br/feed/",
+    "googleSite": "jornalportallagos.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "rc24h",
+    "nome": "RC24h",
+    "grupo": "RJ · Baixadas Litorâneas",
+    "url": "https://rc24h.com.br/feed/",
+    "googleSite": "rc24h.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "correio-sul-fluminense",
+    "nome": "Correio Sul Fluminense",
+    "grupo": "RJ · Sul Fluminense",
+    "url": "https://correiosulfluminense.com.br/feed/",
+    "googleSite": "correiosulfluminense.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "g1-sul-costa-verde",
+    "nome": "g1 Sul do Rio e Costa Verde",
+    "grupo": "RJ · Sul Fluminense",
+    "googleSite": "g1.globo.com/rj/sul-do-rio-costa-verde",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "jornal-ponto",
+    "nome": "Jornal Ponto",
+    "grupo": "RJ · Sul Fluminense",
+    "googleSite": "jornalponto.com",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "tribuna-sf",
+    "nome": "Tribuna SF",
+    "grupo": "RJ · Sul Fluminense",
+    "url": "https://tribunasf.com.br/feed/",
+    "googleSite": "tribunasf.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "foco-regional",
+    "nome": "Foco Regional",
+    "grupo": "RJ · Sul Fluminense",
+    "googleSite": "focoregional.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "o-fluminense",
+    "nome": "O Fluminense",
+    "grupo": "RJ · Região Metropolitana",
+    "url": "https://ofluminense.com.br/feed/",
+    "googleSite": "ofluminense.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "folha-da-baixada",
+    "nome": "Folha da Baixada",
+    "grupo": "RJ · Região Metropolitana",
+    "url": "https://folhadabaixada.com.br/feed/",
+    "googleSite": "folhadabaixada.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "tribuna-petropolis",
+    "nome": "Tribuna de Petrópolis",
+    "grupo": "RJ · Região Metropolitana",
+    "url": "https://tribunadepetropolis.com.br/feed/",
+    "googleSite": "tribunadepetropolis.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "o-globo",
+    "nome": "O Globo",
+    "grupo": "RJ · Região Metropolitana",
+    "url": "https://oglobo.globo.com/rss/oglobo/",
+    "googleSite": "oglobo.globo.com/rio",
+    "filtrar": true
+  },
+  {
+    "id": "meia-hora",
+    "nome": "Meia Hora",
+    "grupo": "RJ · Região Metropolitana",
+    "googleSite": "meiahora.com.br",
+    "filtrar": true,
+    "uf": "RJ"
+  },
+  {
+    "id": "g1-rio-capital",
+    "nome": "g1 Rio de Janeiro (capital)",
+    "grupo": "RJ · Região Metropolitana",
+    "googleSite": "g1.globo.com/rj/rio-de-janeiro",
+    "filtrar": true,
+    "uf": "RJ"
   }
 ]

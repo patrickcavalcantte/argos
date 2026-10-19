@@ -5,7 +5,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const zlib = require('zlib');
 const path = require('path');
-const { CAMPOS_BRUTOS, quando, saida, contar } = require('./dados');
+const { CAMPOS_BRUTOS, quando, saida, contar, consultaGoogle, urlGoogle } = require('./dados');
 
 const PORTA = process.env.PORT || 3737;
 const INTERVALO_MS = 24 * 60 * 60 * 1000;
@@ -113,37 +113,53 @@ function analisar(itens) {
   });
 }
 
+// Baixa um feed, repetindo só as falhas transitórias (timeout, rede, 5xx/429); 403/404 não adianta insistir
+async function baixar(url) {
+  for (let tentativa = 1; ; tentativa++) {
+    try {
+      const r = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 BuscadorSegurancaPublica/1.0', Accept: 'application/rss+xml, application/xml, text/xml, */*' },
+        signal: AbortSignal.timeout(15000),
+        redirect: 'follow',
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.text();
+    } catch (e) {
+      const m = /^HTTP (\d+)/.exec(e.message);
+      const transitoria = !m || +m[1] >= 500 || +m[1] === 429;
+      if (tentativa >= 3 || !transitoria) throw e;
+      await new Promise((ok) => setTimeout(ok, 2000 * tentativa));
+    }
+  }
+}
+
+// Uma fonte pode ter o feed RSS próprio (url) e/ou uma busca no Google Notícias restrita ao site (googleSite);
+// os itens dos dois entram juntos e a fonte conta como OK se ao menos um respondeu.
+function origens(f) {
+  const o = [];
+  if (f.url) o.push({ url: f.url, google: !!f.google });
+  if (f.googleSite) o.push({ url: urlGoogle(`${consultaGoogle(f)} when:2d`), google: true });
+  return o;
+}
+
 // Busca todas as fontes em paralelo; devolve [{ itens, status }]
 function buscarFeeds() {
   return Promise.all(
     feeds.map(async (f) => {
-      try {
-        let texto;
-        for (let tentativa = 1; ; tentativa++) {
-          try {
-            const r = await fetch(f.url, {
-              headers: { 'User-Agent': 'Mozilla/5.0 BuscadorSegurancaPublica/1.0', Accept: 'application/rss+xml, application/xml, text/xml, */*' },
-              signal: AbortSignal.timeout(15000),
-              redirect: 'follow',
-            });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            texto = await r.text();
-            break;
-          } catch (e) {
-            // Só repete falhas transitórias (timeout, rede, 5xx/429); 403/404 não adianta insistir
-            const m = /^HTTP (\d+)/.exec(e.message);
-            const transitoria = !m || +m[1] >= 500 || +m[1] === 429;
-            if (tentativa >= 3 || !transitoria) throw e;
-            await new Promise((ok) => setTimeout(ok, 2000 * tentativa));
-          }
-        }
-        let itens = parsear(texto, f);
-        const total = itens.length;
-        if (f.filtrar) itens = itens.filter(ehSeguranca);
-        return { itens, status: { id: f.id, nome: f.nome, grupo: f.grupo, ok: true, total, relevantes: itens.length } };
-      } catch (e) {
-        return { itens: [], status: { id: f.id, nome: f.nome, grupo: f.grupo, ok: false, erro: String(e.message || e) } };
+      let itens = [], total = 0, erros = [], ok = false;
+      for (const o of origens(f)) {
+        try {
+          const lidos = parsear(await baixar(o.url), { ...f, google: o.google });
+          total += lidos.length;
+          itens.push(...lidos);
+          ok = true;
+        } catch (e) { erros.push(String(e.message || e)); }
       }
+      const vistos = new Set(); // o mesmo link pode vir do RSS e do Google
+      itens = itens.filter((i) => !vistos.has(i.id) && vistos.add(i.id));
+      if (f.filtrar) itens = itens.filter(ehSeguranca);
+      const status = { id: f.id, nome: f.nome, grupo: f.grupo, ok };
+      return { itens, status: ok ? { ...status, total, relevantes: itens.length } : { ...status, erro: erros.join('; ') } };
     })
   );
 }
@@ -207,7 +223,7 @@ const servidor = http.createServer((req, res) => {
   res.writeHead(404).end('Não encontrado');
 });
 
-module.exports = { parsear, feeds, buscarFeeds, analisar }; // reaproveitado por backfill.js e coletar.js
+module.exports = { parsear, feeds, buscarFeeds, analisar, ehSeguranca }; // reaproveitado por backfill.js e coletar.js
 
 if (require.main === module) {
   atualizar().then(() => servidor.listen(PORTA, () => console.log(`Aberto em http://localhost:${PORTA}`)));

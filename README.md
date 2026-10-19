@@ -6,7 +6,7 @@ Monitor de notícias de segurança pública no Brasil. O Argos reúne dezenas de
 
 ## O que ele faz
 
-- **Coleta** 33 fontes: grandes portais, mídia independente e buscas no Google Notícias.
+- **Coleta** 57 fontes: grandes portais, mídia independente, 24 veículos regionais do estado do Rio de Janeiro (por região) e buscas no Google Notícias.
 - **Filtra** o que é segurança pública (por palavras-chave) e descarta política partidária e notícias do exterior.
 - **Classifica** cada notícia por tipo de crime, arma envolvida, estado e região, e se houve morte.
 - **Agrupa duplicatas:** várias matérias sobre o mesmo fato contam como um único caso.
@@ -45,7 +45,7 @@ Abre em http://localhost:3737. O servidor local:
 - guarda o **histórico completo** em `historico.json` (não vai para o git) e mostra tudo no painel, sem o limite de 1 ano;
 - usa a mesma tela e o mesmo formato de dados do painel online.
 
-Para preencher notícias antigas pelo Google Notícias: `node backfill.js [inicio] [fim]` (pare o servidor antes).
+Para preencher notícias antigas pelo Google Notícias: `node backfill.js [inicio] [fim] [--fontes id1,id2]` (pare o servidor antes). Nas fontes com `googleSite` ele busca janelas de 7 dias e divide a janela quando o Google atinge o limite de 100 itens por busca.
 
 Variáveis opcionais: `PORT` (padrão 3737), `PYTHON` (comando do Python, padrão `python`), `HISTORICO` (caminho do histórico).
 
@@ -56,7 +56,8 @@ Edite `feeds.json`. Cada fonte tem:
 | Campo | Significado |
 |---|---|
 | `id`, `nome`, `grupo` | identificação e agrupamento no menu |
-| `url` | feed RSS/Atom |
+| `url` | feed RSS/Atom (opcional se houver `googleSite`) |
+| `googleSite` | domínio (ou `dominio/caminho`) para uma busca no Google Notícias restrita ao site, usada junto com o RSS e no backfill |
 | `filtrar` | `true` aplica o filtro de palavras-chave de segurança pública; `false` aceita tudo |
 | `google` | `true` para buscas do Google Notícias (o título vem como "Manchete - Veículo") |
 | `uf` | estado da fonte, usado como pista quando a notícia não cita o local |

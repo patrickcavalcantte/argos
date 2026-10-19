@@ -31,4 +31,11 @@ function contar(itens) {
   return dias;
 }
 
-module.exports = { DIAS_JANELA, ARQUIVO_DIAS, CAMPOS_BRUTOS, quando, bruto, saida, limiteJanela, limiteArquivo, naJanela, mesDe, contar };
+// Termo da busca no Google Notícias de uma fonte (sem o período): 'site:dominio' ou o q= da própria url
+function consultaGoogle(f) {
+  if (f.googleSite) return `site:${f.googleSite}`;
+  return decodeURIComponent(new URL(f.url).searchParams.get('q')).replace(/\s*when:\S+/, '');
+}
+const urlGoogle = (termo) => `https://news.google.com/rss/search?q=${encodeURIComponent(termo)}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
+
+module.exports = { DIAS_JANELA, ARQUIVO_DIAS, CAMPOS_BRUTOS, quando, bruto, saida, limiteJanela, limiteArquivo, naJanela, mesDe, contar, consultaGoogle, urlGoogle };
