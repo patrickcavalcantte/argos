@@ -22,6 +22,7 @@ const PALAVRAS = [
   'trafic', 'droga', 'entorpecente', 'cocaina', 'maconha', 'fuzil', 'arma de fogo', 'armas', 'municao', 'explosivo',
   'faccao', 'milicia', 'miliciano', 'crime organizado', 'pcc', 'comando vermelho', 'lavagem de dinheiro',
   'seguranca publica', 'secretaria de seguranca', 'penitenciaria', 'presidio', 'sistema prisional', 'fuga de presos',
+  'maria da penha', 'medida protetiva', 'violencia domestica', 'contra a mulher', 'lesao corporal',
   'chacina', 'refem', 'rebelia', 'homicida', 'criminos', 'crime', 'suspeito', 'vitima', 'habeas corpus',
   'golpe', 'estelionato', 'fraude', 'corrupcao'
 ];
