@@ -39,7 +39,7 @@ jobs:
 
       - name: Publicar
         run: |
-          cp index.html xlsx.js relatorio.js favicon.svg apple-touch-icon.png og-image.png site/
+          cp index.html xlsx.js relatorio.js logo.png favicon.png favicon-32.png apple-touch-icon.png og-image.png site/
           touch site/.nojekyll
           cd site
           rm -rf .git

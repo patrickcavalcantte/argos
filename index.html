@@ -6,7 +6,8 @@
 <title>Argos · Notícias de segurança pública</title>
 <meta name="description" content="Monitor de notícias de segurança pública no estado do Rio de Janeiro: dezenas de fontes reunidas, classificadas por tipo de crime, arma e município, com análise e exportação em CSV e XLSX.">
 <meta name="theme-color" content="#c0392b">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
@@ -18,175 +19,222 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<script>try{var t=JSON.parse(localStorage.getItem("tema"));if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var t=JSON.parse(localStorage.getItem("tema"));if(t!=="light")t="dark";document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <style>
+  /* Tokens: escuro (grafite + vermelho) é o padrão; o claro reaproveita os mesmos nomes */
   :root {
-    --bg: #ffffff; --painel: #f5f6f8; --borda: #e6e8ec; --texto: #1d2733; --suave: #76808d;
-    --destaque: #c0392b; --sel: #eceff3; --link: #1d2733; --ativo: #fdf0ee; --sombra: 0 8px 24px rgba(20,30,50,.14);
-    color-scheme: light;
+    --bg: #101317; --painel: #14181d; --card: #181d23; --card-hover: #1e242c; --borda: #29303a; --texto: #eef1f5; --suave: #a3acb9;
+    --destaque: #ef5350; --acento-bg: #c8342f; --sel: #222932; --link: #eef1f5; --ativo: #3a2023; --foco: #8ab4ff;
+    --sombra: 0 10px 28px rgba(0,0,0,.55); color-scheme: dark;
   }
-  :root[data-theme="dark"] {
-    --bg: #14171b; --painel: #1b1f24; --borda: #2a3037; --texto: #e6e9ed; --suave: #8a94a1;
-    --sel: #262c33; --link: #e6e9ed; --ativo: #34211f; --sombra: 0 8px 24px rgba(0,0,0,.55);
-    color-scheme: dark;
+  :root[data-theme="light"] {
+    --bg: #ffffff; --painel: #f4f5f7; --card: #ffffff; --card-hover: #f6f7f9; --borda: #dfe3e8; --texto: #1b2430; --suave: #5b6674;
+    --destaque: #c0392b; --acento-bg: #c0392b; --sel: #eceff3; --link: #1b2430; --ativo: #fdecea; --foco: #1a56db;
+    --sombra: 0 10px 28px rgba(20,30,50,.16); color-scheme: light;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--texto); height: 100vh; display: grid; grid-template-columns: 240px 400px 1fr; overflow: hidden; }
-  body.analise { grid-template-columns: 240px 1fr; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--texto); height: 100vh; display: grid; grid-template-columns: 250px 430px 1fr; overflow: hidden; }
+  body.analise { grid-template-columns: 250px 1fr; }
   body.analise #leitor { display: none; }
-  button, select, input[type=date] { font: inherit; color: var(--texto); background: var(--bg); border: 1px solid var(--borda); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
-  input[type=date] { cursor: text; padding: 5px 8px; }
-  button:hover { background: var(--sel); }
+  :focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .ic { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  button, select, input[type=date] { font: inherit; color: var(--texto); background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 8px 14px; min-height: 40px; cursor: pointer; }
+  input[type=date] { cursor: text; padding: 6px 8px; }
+  button:hover { background: var(--card-hover); }
   button:disabled { opacity: .6; cursor: default; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; }
+  .icone { display: inline-flex; align-items: center; justify-content: center; width: 40px; padding: 0; }
+  a.icone { text-decoration: none; color: var(--texto); background: var(--card); border: 1px solid var(--borda); border-radius: 10px; min-height: 40px; }
+  a.icone:hover { background: var(--card-hover); }
 
   /* Navegação */
   #nav { background: var(--painel); border-right: 1px solid var(--borda); display: flex; flex-direction: column; min-height: 0; }
-  #nav .topo { padding: 16px 16px 10px; }
-  #nav h1 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.3px; }
-  #nav h1 a { color: var(--destaque); text-decoration: none; }
-  #nav h1 a:hover { opacity: .8; }
-  .busca { width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--bg); color: var(--texto); font: inherit; }
-  #menu { flex: 1; overflow-y: auto; padding: 4px 8px 12px; }
-  .item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+  #nav .topo { padding: 20px 20px 12px; }
+  #nav h1 { font-size: 24px; margin: 0; letter-spacing: -.3px; }
+  #nav h1 a { color: var(--destaque); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+  #nav h1 img { border-radius: 9px; display: block; }
+  #menu { flex: 1; overflow-y: auto; padding: 4px 12px 12px; }
+  .blocos { display: grid; gap: 4px; margin-bottom: 14px; }
+  .item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: none; border-radius: 10px; padding: 9px 12px; min-height: 42px; cursor: pointer; }
   .item:hover { background: var(--sel); }
-  .item.ativo { background: var(--ativo); font-weight: 600; }
-  .item .n { color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .item.erro { color: var(--suave); text-decoration: line-through; }
-  .item.grupo::before { content: '▸'; color: var(--suave); width: 14px; flex: none; transition: transform .15s; }
-  .item.grupo.aberto::before { transform: rotate(90deg); }
-  .item.grupo span:first-child { flex: 1; }
-  .item.sub { padding-left: 30px; font-size: 13px; }
-  .sep { height: 1px; background: var(--borda); margin: 8px 6px; }
-  #nav .rodape { border-top: 1px solid var(--borda); padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; }
-  #nav .rodape button { flex: 1; font-size: 13px; padding: 6px 8px; }
+  .item.ativo { background: var(--ativo); font-weight: 600; box-shadow: inset 3px 0 0 var(--destaque); }
+  .item .rot { flex: 1; min-width: 0; }
+  .pilula { background: var(--sel); border-radius: 999px; padding: 1px 10px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .secao { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; background: none; border-top: 1px solid var(--borda); border-radius: 0; padding: 14px 12px 8px; font-weight: 600; font-size: 14px; }
+  .secao:hover { background: none; }
+  .chev { transition: transform .15s; color: var(--suave); width: 18px; height: 18px; }
+  .chev.gira { transform: rotate(90deg); }
+  .chev.recolhida { transform: rotate(-90deg); }
+  .item.sub { padding-left: 38px; font-size: 14px; }
+  .item.sub2 { padding-left: 54px; font-size: 14px; color: var(--suave); }
+  .item.sub2.ativo { color: var(--texto); }
+  .item.erro .rot { text-decoration: line-through; color: var(--suave); }
+  .aviso-fonte { font-size: 12px; color: var(--suave); }
+  #nav .rodape { border-top: 1px solid var(--borda); padding: 12px; display: grid; gap: 6px; }
+  #nav .rodape button { display: flex; align-items: center; gap: 12px; border: 0; background: none; text-align: left; width: 100%; }
+  #nav .rodape button:hover { background: var(--sel); }
 
   /* Lista */
   #coluna { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--borda); }
   body.analise #coluna { border-right: 0; }
-  .migalha { display: flex; justify-content: flex-start; flex-wrap: wrap; gap: 4px; padding: 10px 16px 0; font-size: 12px; color: var(--suave); }
+  .cab { display: flex; align-items: flex-start; gap: 10px; padding: 18px 20px 4px; }
+  .cab .tit-col { flex: 1; min-width: 0; }
+  .cab h2 { margin: 2px 0 0; font-size: 22px; letter-spacing: -.2px; }
+  .meta { color: var(--suave); font-size: 13px; }
+  .migalha { display: flex; flex-wrap: wrap; gap: 4px; font-size: 13px; color: var(--suave); }
   .migalha a { color: var(--suave); text-decoration: none; cursor: pointer; }
   .migalha a:hover { color: var(--destaque); text-decoration: underline; }
   .migalha b { color: var(--texto); font-weight: 600; }
   .migalha i { font-style: normal; opacity: .6; }
-  .cab { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; }
-  .cab .tit-col { flex: 1; min-width: 0; }
-  .cab h2 { margin: 0; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .meta { color: var(--suave); font-size: 12px; }
-  .abas { display: flex; flex: none; }
-  .abas button { border-radius: 0; margin: 0; padding: 5px 12px; font-size: 13px; }
-  .abas button:first-child { border-radius: 8px 0 0 8px; }
-  .abas button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
-  .abas button.on { background: var(--sel); font-weight: 600; }
-  .ferr { display: flex; gap: 8px; align-items: center; padding: 8px 16px 10px; border-bottom: 1px solid var(--borda); position: relative; }
-  .ferr .esp { flex: 1; }
-  .ferr button { font-size: 13px; padding: 4px 10px; }
-  .badge { display: inline-block; min-width: 16px; padding: 0 5px; margin-left: 4px; border-radius: 999px; background: var(--destaque); color: #fff; font-size: 11px; text-align: center; }
+  .busca-linha { display: flex; gap: 8px; align-items: center; padding: 12px 20px 14px; position: relative; }
+  .campo-busca { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 0 12px; min-height: 44px; color: var(--suave); }
+  .campo-busca:focus-within { outline: 2px solid var(--foco); outline-offset: 1px; }
+  .campo-busca input { flex: 1; min-width: 0; border: 0; background: none; padding: 0; min-height: 40px; color: var(--texto); font: inherit; }
+  .campo-busca input:focus { outline: none; }
+  .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--acento-bg); color: #fff; font-size: 12px; text-align: center; }
   .badge[hidden] { display: none; }
-  .pop { position: absolute; z-index: 20; top: calc(100% + 4px); background: var(--bg); border: 1px solid var(--borda); border-radius: 12px; box-shadow: var(--sombra); padding: 12px; display: none; min-width: 230px; }
+  .pop { position: absolute; z-index: 20; top: calc(100% - 6px); background: var(--card); border: 1px solid var(--borda); border-radius: 14px; box-shadow: var(--sombra); padding: 14px; display: none; min-width: 250px; }
   .pop.aberto { display: block; }
-  .pop label { display: block; font-size: 12px; color: var(--suave); margin: 8px 0 3px; }
+  .pop label { display: block; font-size: 13px; color: var(--suave); margin: 10px 0 4px; }
   .pop label:first-child { margin-top: 0; }
   .pop select, .pop input { width: 100%; }
   .pop .duas-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .pop.filtros { left: 16px; }
-  .pop.exportar { right: 16px; padding: 6px; min-width: 190px; }
-  .pop.exportar button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; }
-  .pop.exportar button:hover { background: var(--sel); }
-  #lista { overflow-y: auto; flex: 1; }
-  .post { padding: 11px 16px 11px 30px; border-bottom: 1px solid var(--borda); cursor: pointer; position: relative; }
-  .post::before { content: ''; position: absolute; left: 13px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--destaque); }
-  .post.lido::before { display: none; }
-  .post:hover { background: var(--painel); }
-  .post.sel { background: var(--ativo); }
-  .post .l1 { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--suave); margin-bottom: 2px; }
-  .post .l1 .fonte { font-weight: 600; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .post .l1 .fav { margin-left: auto; color: #e0a800; }
-  .post .tit { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .pop-titulo { font-weight: 600; font-size: 13px; color: var(--suave); text-transform: uppercase; letter-spacing: .05em; margin: 6px 0 2px; }
+  .pop.filtros { left: 20px; }
+  .pop.mais { right: 20px; min-width: 270px; }
+  .pop .acao { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none; padding: 8px 8px; }
+  .pop .acao:hover { background: var(--sel); }
+  .sep { height: 1px; background: var(--borda); margin: 10px 0; }
+  #lista { overflow-y: auto; flex: 1; padding: 0 12px 16px; }
+  .post { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--borda); border-radius: 12px; padding: 12px 14px; margin: 0 0 8px; cursor: pointer; font: inherit; }
+  .post:hover { background: var(--card-hover); }
+  .post.sel { border-color: var(--destaque); box-shadow: 0 0 0 1px var(--destaque); }
+  .post .l1 { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--suave); margin-bottom: 4px; }
+  .post .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--destaque); flex: none; }
+  .post.lido .dot { display: none; }
+  .post .fonte { font-weight: 600; color: var(--texto); max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .post .fav { margin-left: auto; color: #e0a800; }
+  .post .tit { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 15.5px; line-height: 1.4; font-weight: 600; }
   .post.lido .tit { font-weight: 400; color: var(--suave); }
-  .dia { padding: 8px 16px; background: var(--painel); font-size: 12px; color: var(--suave); border-bottom: 1px solid var(--borda); }
+  .dia { padding: 8px 20px; color: var(--suave); font-size: 13px; }
   .vazio { padding: 40px 20px; color: var(--suave); text-align: center; }
   .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--sel); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 13px; }
-  .chip button { border: 0; background: none; padding: 0 8px; }
+  .chip button { border: 0; background: none; padding: 0 8px; min-height: 28px; }
 
   /* Leitor */
   #leitor { overflow-y: auto; min-width: 0; background: var(--bg); }
-  .artigo { max-width: 680px; margin: 0 auto; padding: 32px 28px 64px; }
-  .artigo .origem { color: var(--suave); font-size: 13px; }
-  .artigo h1 { font-size: 26px; line-height: 1.25; margin: 8px 0 14px; letter-spacing: -.3px; }
-  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
-  .tag { background: var(--sel); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
-  .tag.ind { background: var(--destaque); color: #fff; }
-  .tag.morte { background: var(--ativo); color: var(--destaque); font-weight: 600; }
-  .artigo .resumo { font-size: 16px; line-height: 1.65; }
-  .acoes-art { display: flex; gap: 8px; margin: 22px 0 6px; flex-wrap: wrap; }
-  .primario { background: var(--destaque); color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 8px; display: inline-block; }
-  .primario:hover { filter: brightness(1.08); }
-  .nota-art { color: var(--suave); font-size: 12px; }
-  .relac { margin-top: 28px; border-top: 1px solid var(--borda); padding-top: 14px; }
+  .artigo { max-width: 780px; margin: 0 auto; padding: 24px 36px 72px; position: relative; }
+  .art-topo { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .avatar { width: 40px; height: 40px; border-radius: 10px; background: var(--acento-bg); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .art-meta { flex: 1; min-width: 0; line-height: 1.3; }
+  .art-meta b { display: block; }
+  .art-meta span { color: var(--suave); font-size: 13px; }
+  .art-acoes { display: flex; gap: 8px; }
+  .art-acoes .on { color: #e0a800; border-color: #e0a800; }
+  .artigo h1 { font-size: 30px; line-height: 1.25; margin: 0 0 16px; letter-spacing: -.4px; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .tag { background: var(--sel); border-radius: 999px; padding: 3px 12px; font-size: 13px; }
+  .tag.ind { background: var(--acento-bg); color: #fff; }
+  .tag.morte { background: var(--ativo); color: var(--destaque); font-weight: 600; border: 1px solid var(--destaque); }
+  .artigo .resumo { font-size: 18px; line-height: 1.7; margin: 0 0 8px; }
+  .acoes-art { margin: 22px 0 8px; }
+  .primario { background: var(--acento-bg); color: #fff; text-decoration: none; padding: 11px 20px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+  .primario:hover { filter: brightness(1.1); }
+  .nota-art { color: var(--suave); font-size: 13px; }
+  .relac { margin-top: 30px; border-top: 1px solid var(--borda); padding-top: 16px; }
   .relac h3 { font-size: 13px; margin: 0 0 8px; color: var(--suave); text-transform: uppercase; letter-spacing: .05em; }
-  .relac a { display: block; color: var(--texto); text-decoration: none; padding: 5px 0; }
+  .relac a { display: block; color: var(--texto); text-decoration: none; padding: 7px 0; }
   .relac a:hover { text-decoration: underline; }
-  .relac span { color: var(--suave); font-size: 12px; }
-  .vazio-leitor { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--suave); gap: 6px; }
-  .vazio-leitor b { font-size: 40px; color: var(--destaque); opacity: .35; }
+  .relac span { color: var(--suave); font-size: 13px; }
+  .pop.art { right: 36px; left: auto; top: 70px; min-width: 220px; }
+  .painel-vazio { max-width: 640px; margin: 0 auto; padding: 48px 32px; }
+  .painel-vazio h2 { margin: 0 0 4px; font-size: 22px; }
+  .painel-vazio h3 { font-size: 13px; color: var(--suave); text-transform: uppercase; letter-spacing: .05em; margin: 28px 0 8px; }
+  .painel-vazio .barra { grid-template-columns: 270px 1fr 44px; }
+  .painel-vazio .dica { color: var(--suave); margin-top: 28px; font-size: 14px; }
   .so-mobile { display: none; }
 
   /* Análise */
-  #analise { overflow-y: auto; flex: 1; padding: 20px; display: none; }
+  #analise { overflow-y: auto; flex: 1; padding: 8px 20px 24px; display: none; }
   .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
-  .cartao { border: 1px solid var(--borda); border-radius: 12px; padding: 16px; background: var(--bg); }
-  .cartao h3 { margin: 0 0 4px; font-size: 15px; }
-  .cartao .sub { color: var(--suave); font-size: 12px; margin-bottom: 12px; }
-  .barra { display: grid; grid-template-columns: 150px 1fr 44px; gap: 8px; align-items: center; padding: 3px 0; cursor: pointer; font-size: 13px; }
+  .cartao { border: 1px solid var(--borda); border-radius: 14px; padding: 18px; background: var(--card); }
+  .cartao h3 { margin: 0 0 4px; font-size: 16px; }
+  .cartao .sub { color: var(--suave); font-size: 13px; margin-bottom: 12px; }
+  .barra { display: grid; grid-template-columns: 150px 1fr 44px; gap: 8px; align-items: center; padding: 4px 0; cursor: pointer; font-size: 14px; }
   .barra:hover .trilho i { opacity: .8; }
   .barra .rot { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .barra .trilho { background: var(--painel); border-radius: 4px; height: 14px; }
   .barra .trilho i { display: block; height: 100%; border-radius: 4px; background: var(--destaque); }
   .barra .val { text-align: right; color: var(--suave); font-variant-numeric: tabular-nums; }
   .cartao select { margin-bottom: 10px; }
-  .aviso { color: var(--suave); font-size: 12px; margin-top: 10px; }
+  .aviso { color: var(--suave); font-size: 13px; margin-top: 10px; }
   .kpis { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .kpi { border: 1px solid var(--borda); border-radius: 12px; padding: 12px 18px; min-width: 130px; }
-  .kpi b { display: block; font-size: 24px; }
-  .kpi span { color: var(--suave); font-size: 12px; }
+  .kpi { border: 1px solid var(--borda); border-radius: 14px; padding: 12px 18px; min-width: 130px; background: var(--card); }
+  .kpi b { display: block; font-size: 26px; }
+  .kpi span { color: var(--suave); font-size: 13px; }
 
-  @media (max-width: 1100px) { body { grid-template-columns: 220px 340px 1fr; } }
+  @media (max-width: 1180px) { body { grid-template-columns: 230px 360px 1fr; } }
   @media (max-width: 860px) {
     body, body.analise { grid-template-columns: 1fr; }
-    .so-mobile { display: inline-block; }
-    #nav { position: fixed; z-index: 30; inset: 0 auto 0 0; width: 280px; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--sombra); }
+    .so-mobile { display: inline-flex; }
+    #nav { position: fixed; z-index: 30; inset: 0 auto 0 0; width: 290px; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--sombra); }
     body.menu-aberto #nav { transform: none; }
     #leitor, body.analise #leitor { position: fixed; inset: 0; z-index: 25; display: none; }
     body.lendo #leitor { display: block; }
     body.analise.lendo #leitor { display: none; }
-    .pop.exportar { right: 8px; } .pop.filtros { left: 8px; }
+    .pop.mais { right: 12px; } .pop.filtros { left: 12px; }
+    .artigo { padding: 16px 18px 64px; } .artigo h1 { font-size: 24px; } .pop.art { right: 18px; }
+    .painel-vazio { display: none; }
   }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<aside id="nav">
-  <div class="topo">
-    <h1><a href="./" id="logo" title="Voltar para a home">Argos</a></h1>
-    <input class="busca" id="busca" type="search" placeholder="Buscar nas notícias…">
-  </div>
-  <div id="menu"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20v-8M10 20V5M16 20v-5M21 20H3"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5H5V6h5"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0110 4a8 8 0 1010 10z"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></symbol>
+  <symbol id="i-newspaper" viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 01-2-2zM17 9h3v8a2 2 0 01-2 2"/><path d="M8 9h5M8 13h5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></symbol>
+</svg>
+<aside id="nav" aria-label="Navegação principal">
+  <div class="topo"><h1><a href="./" id="logo" title="Voltar para o início"><img src="logo.png" alt="" width="36" height="36">Argos</a></h1></div>
+  <nav id="menu" aria-label="Menu"></nav>
   <div class="rodape">
-    <button id="tema" title="Alternar entre tema claro e escuro">Tema</button>
-    <button id="atualizar">Atualizar</button>
+    <button id="tema" type="button">Tema</button>
+    <button id="atualizar" type="button">Atualizar</button>
   </div>
 </aside>
-<section id="coluna">
-  <nav class="migalha" id="migalha" aria-label="Você está em"></nav>
+<section id="coluna" aria-label="Notícias">
   <div class="cab">
-    <button id="abrirmenu" class="so-mobile" title="Menu">☰</button>
-    <div class="tit-col"><h2 id="titulo">Todos os posts</h2><div class="meta" id="meta"></div></div>
-    <div class="abas"><button id="aba-lista" class="on">Notícias</button><button id="aba-analise">Análise</button></div>
+    <button id="abrirmenu" type="button" class="so-mobile icone" aria-label="Abrir menu"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <div class="tit-col">
+      <nav class="migalha" id="migalha" aria-label="Você está em"></nav>
+      <h2 id="titulo">O que está acontecendo?</h2>
+      <div class="meta" id="meta" aria-live="polite"></div>
+    </div>
   </div>
-  <div class="ferr">
-    <button id="bfiltros">Filtros<span class="badge" id="nfiltros" hidden></span></button>
-    <span class="esp"></span>
-    <button id="marcar" title="Marcar como lidas as notícias da lista">Marcar como lidos</button>
-    <button id="bexportar">Exportar ▾</button>
+  <div class="busca-linha">
+    <label class="campo-busca"><svg class="ic"><use href="#i-search"/></svg><span class="sr">Buscar notícias</span><input id="busca" type="search" placeholder="Buscar notícias…" autocomplete="off"></label>
+    <button id="bfiltros" type="button" class="btn" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-sliders"/></svg>Filtros<span class="badge" id="nfiltros" hidden></span></button>
+    <button id="bmais" type="button" class="icone" aria-label="Mais ações: marcar como lidas e exportar" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-dots"/></svg></button>
     <div class="pop filtros" id="pfiltros">
       <label for="periodo">Período</label>
       <select id="periodo">
@@ -200,20 +248,29 @@
       <select id="uf"><option value="">Todos os municípios</option></select>
       <label for="indsel">Indicador</label>
       <select id="indsel"><option value="">Todos os indicadores</option></select>
-      <label>Ou escolha as datas</label>
-      <div class="duas-datas"><input type="date" id="de" title="De"><input type="date" id="ate" title="Até"></div>
-      <label><button id="limpar" style="width:100%">Limpar filtros</button></label>
+      <label for="de">Ou escolha as datas</label>
+      <div class="duas-datas"><input type="date" id="de" aria-label="Data inicial"><input type="date" id="ate" aria-label="Data final"></div>
+      <div class="sep"></div>
+      <button id="limpar" type="button" style="width:100%">Limpar filtros</button>
     </div>
-    <div class="pop exportar" id="pexportar">
-      <button id="csv" title="Baixar os dados classificados">Planilha CSV</button>
-      <button id="xlsx" title="Planilha Excel com links clicáveis">Planilha Excel (XLSX)</button>
-      <button id="relatorio" title="Relatório preliminar do período e município escolhidos, pronto para imprimir ou salvar em PDF">Relatório (PDF)</button>
+    <div class="pop mais" id="pmais">
+      <button id="marcar" type="button" class="acao"><svg class="ic"><use href="#i-check"/></svg>Marcar todas como lidas</button>
+      <div class="sep"></div>
+      <div class="pop-titulo">Exportar</div>
+      <label for="expgrupo">Fontes a exportar</label>
+      <select id="expgrupo"><option value="">Todas as fontes</option></select>
+      <label for="expind">Indicador</label>
+      <select id="expind"><option value="">Todos os indicadores</option></select>
+      <div class="sep"></div>
+      <button id="csv" type="button" class="acao" title="Baixar os dados classificados"><svg class="ic"><use href="#i-download"/></svg>Planilha CSV</button>
+      <button id="xlsx" type="button" class="acao" title="Planilha Excel com links clicáveis"><svg class="ic"><use href="#i-download"/></svg>Planilha Excel (XLSX)</button>
+      <button id="relatorio" type="button" class="acao" title="Relatório preliminar, pronto para imprimir ou salvar em PDF"><svg class="ic"><use href="#i-download"/></svg>Relatório (PDF)</button>
     </div>
   </div>
   <div id="lista"></div>
   <div id="analise"></div>
 </section>
-<section id="leitor"></section>
+<section id="leitor" aria-label="Leitura da notícia"></section>
 <script src="xlsx.js"></script>
 <script src="relatorio.js"></script>
 <script>
@@ -221,6 +278,7 @@ const $ = (id) => document.getElementById(id);
 // Online (GitHub Pages) os dados são atualizados por uma coleta diária; só o servidor local tem o botão Atualizar
 const local = ['localhost', '127.0.0.1'].includes(location.hostname);
 if (!local) $('atualizar').style.display = 'none';
+const ico = (n, cls = '') => `<svg class="ic ${cls}" aria-hidden="true" focusable="false"><use href="#i-${n}"/></svg>`;
 let contagens = { dias: {} };
 let arquivo = { meses: new Set(), carregados: new Set(), promessas: {} }; // notícias de 30 dias a 1 ano, um arquivo por mês
 const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -232,15 +290,20 @@ let favoritos = new Set(ler('favoritos', []));
 let filtro = { tipo: 'todos', valor: null };
 let termo = '';
 let visao = 'lista';
-let extra = {}; // { cat, uf, arma } vindos dos gráficos
+let extra = {}; // { cat, uf, arma, ind } vindos dos gráficos
 let ufGrafico = '';
 let ufSel = ''; // filtro por município do RJ, vale para lista, análise e exportações
+let sel = null; // notícia aberta no leitor
 
 const INDICADORES = ['Ações de policiamento', 'Ações e ataques criminais', 'Violência contra a mulher', 'Violência contra criança e adolescente', 'Vitimização de agente', 'Chacina e tentativa de chacina', 'Linchamento e tentativa de linchamento', 'Crimes e conflitos socioambientais', 'Violência étnico-racial, religiosa e LGBTIAfóbica'];
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// Notícias do período e do estado escolhidos (datas manuais substituem o seletor); é o que as exportações levam
+// As regiões do RJ ("RJ · Norte Fluminense"...) aparecem juntas no menu como "Rio de Janeiro"
+const superGrupo = (g) => (/^RJ · /.test(g) ? 'Rio de Janeiro' : g);
+const rotuloGrupo = (g) => g.replace(/^RJ · /, '');
+
+// Notícias do período e do município escolhidos (datas manuais substituem o seletor); é o que as exportações levam
 function noPeriodo() {
   const de = $('de').value, ate = $('ate').value;
   const limite = de || ate ? 0 : +$('periodo').value;
@@ -254,9 +317,16 @@ function noPeriodo() {
   });
 }
 
+// O que as exportações levam: período e município da tela, mais o grupo de fontes e o indicador escolhidos no menu de ações
+function paraExportar() {
+  const g = $('expgrupo').value, ind = $('expind').value;
+  return noPeriodo().filter((i) => (!g || i.grupo === g) && (!ind || (i.ind || []).includes(ind)));
+}
+
 function visiveis(semExtra) {
   const q = norm(termo);
   return noPeriodo().filter((i) => {
+    if (filtro.tipo === 'sgrupo' && superGrupo(i.grupo) !== filtro.valor) return false;
     if (filtro.tipo === 'grupo' && i.grupo !== filtro.valor) return false;
     if (filtro.tipo === 'fonte' && i.fonteId !== filtro.valor) return false;
     if (filtro.tipo === 'naolidos' && lidos.has(i.id)) return false;
@@ -269,6 +339,12 @@ function visiveis(semExtra) {
   });
 }
 
+function montarGruposExportacao() {
+  const atual = $('expgrupo').value;
+  const grupos = [...new Set(dados.status.map((x) => x.grupo))];
+  $('expgrupo').innerHTML = '<option value="">Todas as fontes</option>' + grupos.map((g) => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  $('expgrupo').value = grupos.includes(atual) ? atual : '';
+}
 // Municípios do RJ que aparecem nos dados, com a quantidade de notícias
 function montarEstados() {
   const n = {};
@@ -301,23 +377,9 @@ async function garantirArquivo() {
   montarEstados(); lista();
 }
 
-function hora(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-}
-const diaRotulo = (iso) => {
-  if (!iso) return 'Sem data';
-  const d = new Date(iso), h = new Date();
-  const ontem = new Date(); ontem.setDate(h.getDate() - 1);
-  if (d.toDateString() === h.toDateString()) return 'Hoje';
-  if (d.toDateString() === ontem.toDateString()) return 'Ontem';
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
-};
-
 function chips() {
   const nomes = { cat: 'Crime', uf: 'Município', arma: 'Arma', ind: 'Indicador' };
-  return Object.entries(extra).map(([k, v]) => `<span class="chip">${nomes[k]}: ${esc(v)}<button data-limpar="${k}" title="Remover">✕</button></span>`).join(' ');
+  return Object.entries(extra).map(([k, v]) => `<span class="chip">${nomes[k]}: ${esc(v)}<button type="button" data-limpar="${k}" aria-label="Remover filtro ${nomes[k]}: ${esc(v)}">✕</button></span>`).join(' ');
 }
 
 function barras(pares, chave, max) {
@@ -340,7 +402,7 @@ function tendencia() {
     meses[m] = (meses[m] || 0) + (serie ? (v[tipo] || {})[valor] || 0 : v.casos);
   }
   const op = (v, rot) => `<option value="${esc(v)}" ${v === serie ? 'selected' : ''}>${esc(rot)}</option>`;
-  const seletor = `<select id="serie">${op('', 'Todos os casos')}<optgroup label="Município">${[...ufs].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((u) => op('mun:' + u, u)).join('')}</optgroup><optgroup label="Indicador">${INDICADORES.filter((c) => inds.has(c)).map((c) => op('ind:' + c, c)).join('')}</optgroup><optgroup label="Tipo de crime">${[...cats].sort().map((c) => op('cat:' + c, c)).join('')}</optgroup></select>`;
+  const seletor = `<select id="serie" aria-label="Série do histórico">${op('', 'Todos os casos')}<optgroup label="Município">${[...ufs].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((u) => op('mun:' + u, u)).join('')}</optgroup><optgroup label="Indicador">${INDICADORES.filter((c) => inds.has(c)).map((c) => op('ind:' + c, c)).join('')}</optgroup><optgroup label="Tipo de crime">${[...cats].sort().map((c) => op('cat:' + c, c)).join('')}</optgroup></select>`;
   const mesRot = (m) => new Date(m + '-15T12:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
   const pares = Object.entries(meses).sort().reverse().map(([m, n]) => [m, n, mesRot(m)]);
   const desde = dias.length ? new Date(dias[0][0] + 'T12:00').toLocaleDateString('pt-BR') : '';
@@ -377,7 +439,7 @@ function analise() {
       <div class="cartao"><h3>Notícias por indicador</h3><div class="sub">Casos distintos; um caso pode entrar em mais de um indicador. Clique numa barra para ver as notícias.</div>${barras(Object.entries(inds).map(([n, v]) => [n, v, n]), 'ind', 9)}<div class="aviso">Classificação preliminar por palavras-chave.</div></div>
       <div class="cartao"><h3>Notícias por tipo de crime</h3><div class="sub">Casos distintos (notícias repetidas do mesmo fato contam uma vez). Um caso pode ter mais de um tipo. Clique numa barra para ver as notícias.</div>${barras(ord(cats), 'cat', 14)}</div>
       <div class="cartao"><h3>Mortes por tipo de arma</h3><div class="sub">Notícias que mencionam morte, pelo meio descrito no texto.</div>${barras(ord(armas), 'arma')}<div class="aviso">"Não informada" = a manchete não diz como a vítima morreu.</div></div>
-      <div class="cartao"><h3>Municípios com mais notícias</h3><div class="sub">Filtre por tipo de ocorrência:</div><select id="ufcat">${opcoes}</select>${barras(ord(ufs).map(([u, n]) => [u, n, u]), 'uf', 15)}<div class="aviso">${semUf} notícias sem município identificado ficam de fora.</div></div>
+      <div class="cartao"><h3>Municípios com mais notícias</h3><div class="sub">Filtre por tipo de ocorrência:</div><select id="ufcat" aria-label="Tipo de ocorrência">${opcoes}</select>${barras(ord(ufs).map(([u, n]) => [u, n, u]), 'uf', 15)}<div class="aviso">${semUf} notícias sem município identificado ficam de fora.</div></div>
       <div class="cartao"><h3>Notícias por região do estado</h3><div class="sub">${ufGrafico ? esc(ufGrafico) : 'Todas as categorias'}</div>${barras(ord(regs), 'regiao')}</div>
       <div class="cartao"><h3>Notícias por dia</h3><div class="sub">Volume de notícias coletadas.</div>${barras(Object.entries(dias).sort().reverse().map(([d, n]) => [d, n, diaRot(d)]), 'dia', 8)}</div>
       ${tendencia()}
@@ -385,55 +447,70 @@ function analise() {
     <div class="aviso">A classificação é feita por palavras-chave (script analise.py) sobre título e resumo; é uma estimativa, não estatística oficial.</div>`;
 }
 
-// ---- Navegação lateral: grupos recolhidos; as fontes aparecem ao abrir o grupo
-const abertos = new Set();
+// ---- Navegação lateral: ações principais no topo e as fontes numa seção que abre e fecha
+const abertos = new Set(); // grupos e regiões abertos no menu
+let fontesAbertas = ler('fontesAbertas', true);
+const ICONE_GRUPO = { 'Grandes portais': 'newspaper', 'Rio de Janeiro': 'pin', 'Mídia independente': 'globe', 'Google Notícias': 'search' };
 function menu() {
   const naoLidos = dados.itens.filter((i) => !lidos.has(i.id)).length;
-  const linha = (tipo, valor, nome, n, cls = '') =>
-    `<div class="item ${cls} ${filtro.tipo === tipo && filtro.valor === valor ? 'ativo' : ''}" data-tipo="${tipo}" data-valor="${esc(valor ?? '')}"><span>${esc(nome)}</span><span class="n">${n ?? ''}</span></div>`;
-  const porGrupo = {}, porFonte = {};
-  for (const i of dados.itens) { porGrupo[i.grupo] = (porGrupo[i.grupo] || 0) + 1; porFonte[i.fonteId] = (porFonte[i.fonteId] || 0) + 1; }
-  $('menu').innerHTML =
-    linha('todos', null, 'Todos os posts', dados.itens.length) +
-    linha('naolidos', null, 'Não lidos', naoLidos) +
-    linha('favoritos', null, '★ Favoritados', favoritos.size) +
-    '<div class="sep"></div>' +
-    [...new Set(dados.status.map((s) => s.grupo))].map((g) =>
-      `<div class="item grupo ${abertos.has(g) ? 'aberto' : ''} ${filtro.tipo === 'grupo' && filtro.valor === g ? 'ativo' : ''}" data-tipo="grupo" data-valor="${esc(g)}"><span>${esc(g)}</span><span class="n">${porGrupo[g] || 0}</span></div>` +
-      (abertos.has(g) ? dados.status.filter((s) => s.grupo === g).map((s) => linha('fonte', s.id, s.nome, s.ok ? porFonte[s.id] || 0 : '✕', 'sub ' + (s.ok ? '' : 'erro'))).join('') : '')
-    ).join('');
+  const ativoNav = (tipo) => (tipo === 'analise' ? visao === 'analise' : visao === 'lista' && filtro.tipo === tipo);
+  const nav = (tipo, icone, nome, n) => `<button type="button" class="item ${ativoNav(tipo) ? 'ativo' : ''}" data-tipo="${tipo}" ${ativoNav(tipo) ? 'aria-current="page"' : ''}>${ico(icone)}<span class="rot">${nome}</span>${n === undefined ? '' : `<span class="pilula">${n}</span>`}</button>`;
+  const grupos = [...new Set(dados.status.map((s) => s.grupo))];
+  const sgrupos = [...new Set(grupos.map(superGrupo))];
+  const fonte = (s, cls) => `<button type="button" class="item ${cls} ${filtro.tipo === 'fonte' && filtro.valor === s.id ? 'ativo' : ''} ${s.ok ? '' : 'erro'}" data-tipo="fonte" data-valor="${esc(s.id)}"><span class="rot">${esc(s.nome)}</span>${s.ok ? '' : '<span class="aviso-fonte">indisponível</span>'}</button>`;
+  const arvore = sgrupos.map((sg) => {
+    const gs = grupos.filter((g) => superGrupo(g) === sg), aberto = abertos.has(sg);
+    let filhos = '';
+    if (aberto) filhos = gs.length > 1
+      ? gs.map((g) => `<button type="button" class="item sub ${filtro.tipo === 'grupo' && filtro.valor === g ? 'ativo' : ''}" data-tipo="grupo" data-valor="${esc(g)}" aria-expanded="${abertos.has(g)}"><span class="rot">${esc(rotuloGrupo(g))}</span>${ico('chevron-right', 'chev ' + (abertos.has(g) ? 'gira' : ''))}</button>` + (abertos.has(g) ? dados.status.filter((s) => s.grupo === g).map((s) => fonte(s, 'sub2')).join('') : '')).join('')
+      : dados.status.filter((s) => s.grupo === gs[0]).map((s) => fonte(s, 'sub')).join('');
+    return `<button type="button" class="item ${filtro.tipo === 'sgrupo' && filtro.valor === sg ? 'ativo' : ''}" data-tipo="sgrupo" data-valor="${esc(sg)}" aria-expanded="${aberto}">${ico(ICONE_GRUPO[sg] || 'folder')}<span class="rot">${esc(sg)}</span>${ico('chevron-right', 'chev ' + (aberto ? 'gira' : ''))}</button>${filhos}`;
+  }).join('');
+  $('menu').innerHTML = `<div class="blocos">${nav('todos', 'home', 'Início')}${nav('naolidos', 'check', 'Não lidas', naoLidos)}${nav('favoritos', 'star', 'Favoritas', favoritos.size)}${nav('analise', 'chart', 'Análise')}</div>
+    <button type="button" class="secao" id="bfontes" aria-expanded="${fontesAbertas}">Fontes ${ico('chevron-down', 'chev ' + (fontesAbertas ? '' : 'recolhida'))}</button>
+    ${fontesAbertas ? `<div class="fontes">${arvore}</div>` : ''}`;
 }
 
+// "Há 48 min", "Há 3 h" ou a data, para notícias mais antigas
 const relativo = (iso) => {
   if (!iso) return '';
   const min = Math.round((Date.now() - new Date(iso)) / 60000);
   if (min < 1) return 'agora';
-  if (min < 60) return `${min} min`;
-  if (min < 1440) return `${Math.round(min / 60)} h`;
+  if (min < 60) return `Há ${min} min`;
+  if (min < 1440) return `Há ${Math.round(min / 60)} h`;
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 };
 
 // A lista esconde as repetições do mesmo caso (aparecem no leitor, em "Mesmo caso em outros veículos"); as exportações levam tudo
 const paraLista = () => visiveis().filter((i) => !i.dup);
 
+function tituloTela() {
+  if (visao === 'analise') return 'Análise';
+  const nomes = { todos: 'O que está acontecendo?', naolidos: 'Não lidas', favoritos: 'Favoritas' };
+  if (filtro.tipo === 'sgrupo') return filtro.valor;
+  if (filtro.tipo === 'grupo') return rotuloGrupo(filtro.valor);
+  if (filtro.tipo === 'fonte') return dados.status.find((s) => s.id === filtro.valor)?.nome ?? '';
+  return nomes[filtro.tipo];
+}
+
 function lista() {
   document.body.classList.toggle('analise', visao === 'analise');
   $('lista').style.display = visao === 'lista' ? '' : 'none';
   $('analise').style.display = visao === 'analise' ? 'block' : 'none';
-  $('aba-lista').classList.toggle('on', visao === 'lista');
-  $('aba-analise').classList.toggle('on', visao === 'analise');
   $('marcar').style.display = visao === 'lista' ? '' : 'none';
   $('indsel').value = extra.ind || '';
+  $('titulo').textContent = tituloTela();
   badgeFiltros(); migalha();
   if (visao === 'analise') { analise(); menu(); return meta(); }
   const itens = paraLista();
   let html = '';
   const LIMITE = 500;
   for (const i of itens.slice(0, LIMITE)) {
-    html += `<div class="post ${lidos.has(i.id) ? 'lido' : ''} ${sel === i.id ? 'sel' : ''}" data-id="${esc(i.id)}">
-      <div class="l1"><span class="fonte">${esc(i.fonte)}</span><span>· ${relativo(i.data)}${i.mun ? ' · ' + esc(i.mun) : ''}</span>${favoritos.has(i.id) ? '<span class="fav">★</span>' : ''}</div>
-      <div class="tit">${esc(i.titulo)}</div>
-    </div>`;
+    const lida = lidos.has(i.id);
+    html += `<button type="button" class="post ${lida ? 'lido' : ''} ${sel === i.id ? 'sel' : ''}" data-id="${esc(i.id)}" ${sel === i.id ? 'aria-current="true"' : ''}>
+      <span class="l1">${lida ? '' : '<span class="dot" aria-hidden="true"></span><span class="sr">Não lida. </span>'}<span class="fonte">${esc(i.fonte)}</span><span>· ${relativo(i.data)}${i.mun ? ' · ' + esc(i.mun) : ''}</span>${favoritos.has(i.id) ? '<span class="fav" title="Favorita">★<span class="sr"> Favorita</span></span>' : ''}</span>
+      <span class="tit">${esc(i.titulo)}</span>
+    </button>`;
   }
   if (itens.length > LIMITE) html += `<div class="vazio">Mostrando as ${LIMITE} mais recentes de ${itens.length}. Use a busca ou os filtros para refinar, ou exporte a planilha com tudo.</div>`;
   html = (Object.keys(extra).length ? `<div class="dia">Filtros: ${chips()}</div>` : '') + html;
@@ -444,11 +521,9 @@ function lista() {
     : antigo ? `As notícias desse período já saíram do ar: ficam disponíveis por ${dias === 365 ? '1 ano' : dias + ' dias'}. A contagem de casos continua no histórico mensal da aba Análise.`
     : 'Nenhuma notícia encontrada com esses filtros.';
   $('lista').innerHTML = html || `<div class="vazio">${vazio}</div>`;
-  const nomes = { todos: 'Todos os posts', naolidos: 'Não lidos', favoritos: 'Favoritados' };
-  $('titulo').textContent = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? (dados.status.find((s) => s.id === filtro.valor)?.nome ?? '') : nomes[filtro.tipo];
   meta(itens.length);
   menu();
-  if (sel && !itens.some((i) => i.id === sel)) renderLeitor(); // mantém o artigo aberto mesmo fora da lista
+  if (!sel || !itens.some((i) => i.id === sel)) renderLeitor(); // sem notícia aberta: painel de resumo; aberta e fora da lista: mantém o artigo
 }
 
 // ---- Migalha de pão (Home › Notícias › …) e volta à home
@@ -456,64 +531,104 @@ function migalha() {
   const partes = [['Home', 'home']];
   if (visao === 'analise') partes.push(['Notícias', 'noticias'], ['Análise']);
   else {
-    const g = filtro.tipo === 'grupo' ? filtro.valor : filtro.tipo === 'fonte' ? dados.status.find((x) => x.id === filtro.valor)?.grupo : null;
-    const f = filtro.tipo === 'fonte' ? dados.status.find((x) => x.id === filtro.valor)?.nome : null;
-    const nomes = { naolidos: 'Não lidos', favoritos: 'Favoritados' };
-    partes.push(['Notícias', g || nomes[filtro.tipo] ? 'noticias' : null]);
+    const nomes = { naolidos: 'Não lidas', favoritos: 'Favoritas' };
+    const f = filtro.tipo === 'fonte' ? dados.status.find((x) => x.id === filtro.valor) : null;
+    const g = f ? f.grupo : filtro.tipo === 'grupo' ? filtro.valor : null;
+    const sg = g ? superGrupo(g) : filtro.tipo === 'sgrupo' ? filtro.valor : null;
+    const cadeia = [];
+    if (sg) cadeia.push([sg, 'sgrupo:' + sg]);
+    if (g && superGrupo(g) !== g) cadeia.push([rotuloGrupo(g), 'grupo:' + g]);
+    if (f) cadeia.push([f.nome]);
+    partes.push(['Notícias', cadeia.length || nomes[filtro.tipo] ? 'noticias' : null]);
     if (nomes[filtro.tipo]) partes.push([nomes[filtro.tipo]]);
-    if (g) partes.push([g, f ? 'grupo' : null]);
-    if (f) partes.push([f]);
+    cadeia.forEach(([n, a], k) => partes.push([n, k === cadeia.length - 1 ? null : a]));
   }
-  $('migalha').innerHTML = partes.map(([nome, acao], k) => (k === partes.length - 1 || !acao ? `<b>${esc(nome)}</b>` : `<a data-ir="${acao}">${esc(nome)}</a>`)).join(' <i>›</i> '); // o último item é onde você está
+  $('migalha').innerHTML = partes.map(([nome, acao], k) => (k === partes.length - 1 || !acao ? `<b${k === partes.length - 1 ? ' aria-current="page"' : ''}>${esc(nome)}</b>` : `<a href="#" data-ir="${esc(acao)}">${esc(nome)}</a>`)).join(' <i aria-hidden="true">›</i> ');
 }
 function irHome() {
   filtro = { tipo: 'todos', valor: null }; termo = ''; $('busca').value = ''; extra = {}; ufSel = ''; ufGrafico = '';
   $('periodo').value = '604800000'; $('de').value = ''; $('ate').value = '';
   visao = 'lista'; sel = null; abertos.clear();
   document.body.classList.remove('lendo', 'menu-aberto');
-  renderLeitor(); lista();
+  lista();
   $('lista').scrollTop = 0;
 }
 $('logo').onclick = (e) => { e.preventDefault(); irHome(); };
 $('migalha').onclick = (e) => {
   const a = e.target.closest('[data-ir]'); if (!a) return;
-  if (a.dataset.ir === 'home') return irHome();
+  e.preventDefault();
+  const [acao, ...r] = a.dataset.ir.split(':'), valor = r.join(':');
+  if (acao === 'home') return irHome();
   visao = 'lista';
-  if (a.dataset.ir === 'noticias') filtro = { tipo: 'todos', valor: null };
-  if (a.dataset.ir === 'grupo') filtro = { tipo: 'grupo', valor: dados.status.find((x) => x.id === filtro.valor)?.grupo };
+  filtro = acao === 'noticias' ? { tipo: 'todos', valor: null } : { tipo: acao, valor };
   lista();
 };
 
 // ---- Leitor
-let sel = null;
+function avatar(nome) { return esc((String(nome || '?').match(/[A-Za-zÀ-ÿ0-9]/) || ['?'])[0].toUpperCase()); }
+
 function renderLeitor() {
   const i = sel && dados.itens.find((x) => x.id === sel);
-  if (!i) { $('leitor').innerHTML = '<div class="vazio-leitor"><b>A</b><span>Selecione uma notícia para ler</span></div>'; return; }
+  if (!i) return renderResumo();
   const dataTxt = i.data ? new Date(i.data).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' }) : '';
   const tags = [...(i.ind || []).map((c) => `<span class="tag ind">${esc(c)}</span>`), ...(i.cats || []).map((c) => `<span class="tag">${esc(c)}</span>`), i.morte ? `<span class="tag morte">Morte${i.arma ? ' · ' + esc(i.arma) : ''}</span>` : '',
     i.mun ? `<span class="tag">${esc(i.mun)}</span>` : '', i.regiaoRJ ? `<span class="tag">${esc(i.regiaoRJ)}</span>` : ''].join('');
   const relac = i.caso ? dados.itens.filter((x) => x.caso === i.caso && x.id !== i.id).sort((a, b) => (b.data || '').localeCompare(a.data || '')).slice(0, 8) : [];
+  const fav = favoritos.has(i.id);
   $('leitor').innerHTML = `<article class="artigo">
-    <button id="voltar" class="so-mobile">‹ Voltar</button>
-    <div class="origem">${esc(i.fonte)} · ${esc(dataTxt)}</div>
+    <button id="voltar" type="button" class="so-mobile btn" style="margin-bottom:12px">${ico('back')}Voltar</button>
+    <div class="art-topo">
+      <span class="avatar" aria-hidden="true">${avatar(i.fonte)}</span>
+      <div class="art-meta"><b>${esc(i.fonte)}</b><span title="${esc(dataTxt)}">${relativo(i.data)}${i.mun ? ' · ' + esc(i.mun) : ''} · ${esc(dataTxt)}</span></div>
+      <div class="art-acoes">
+        <button type="button" class="icone ${fav ? 'on' : ''}" data-fav="${esc(i.id)}" aria-pressed="${fav}" aria-label="${fav ? 'Remover das favoritas' : 'Adicionar às favoritas'}" title="${fav ? 'Remover das favoritas' : 'Favoritar'}">${ico('star')}</button>
+        <a class="icone" href="${esc(i.link)}" target="_blank" rel="noopener" aria-label="Abrir a matéria original no site do veículo" title="Abrir a matéria original">${ico('external')}</a>
+        <button type="button" class="icone" id="artmais" aria-label="Mais ações" aria-haspopup="true" aria-expanded="false">${ico('dots')}</button>
+      </div>
+    </div>
+    <div class="pop art" id="partmenu">
+      <button type="button" class="acao" data-naolido="${esc(i.id)}">${ico('check')}Marcar como não lida</button>
+      <button type="button" class="acao" data-copiar="${esc(i.link)}">${ico('copy')}<span>Copiar link da matéria</span></button>
+    </div>
     <h1>${esc(i.titulo)}</h1>
     <div class="tags">${tags}</div>
     ${i.resumo ? `<p class="resumo">${esc(i.resumo)}</p>` : ''}
-    <div class="acoes-art">
-      <a class="primario" href="${esc(i.link)}" target="_blank" rel="noopener">Abrir matéria original ↗</a>
-      <button data-fav="${esc(i.id)}">${favoritos.has(i.id) ? '★ Favoritada' : '☆ Favoritar'}</button>
-      <button data-naolido="${esc(i.id)}">Marcar como não lida</button>
-    </div>
+    <div class="acoes-art"><a class="primario" href="${esc(i.link)}" target="_blank" rel="noopener">Ler matéria completa no site ${ico('external')}</a></div>
     <div class="nota-art">O Argos mostra só título e resumo; a matéria completa está no site do veículo.</div>
     ${relac.length ? `<div class="relac"><h3>Mesmo caso em outros veículos</h3>${relac.map((x) => `<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.titulo)}<br><span>${esc(x.fonte)} · ${relativo(x.data)}</span></a>`).join('')}</div>` : ''}
   </article>`;
   $('leitor').scrollTop = 0;
 }
 
+// Sem notícia aberta, o painel de leitura mostra um resumo (dados reais) da lista atual, em vez de ficar vazio
+function renderResumo() {
+  const itens = paraLista();
+  const naoLidas = itens.filter((i) => !lidos.has(i.id)).length;
+  const mortes = itens.filter((i) => i.morte).length;
+  const inds = Object.fromEntries(INDICADORES.map((n) => [n, 0]));
+  for (const i of itens) for (const c of i.ind || []) inds[c]++;
+  const top = Object.entries(inds).filter(([, n]) => n).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  $('leitor').innerHTML = `<div class="painel-vazio">
+    <h2>Resumo da lista</h2>
+    <div class="meta">Escolha uma notícia ao lado para ler aqui.</div>
+    <div class="kpis" style="margin-top:18px">
+      <div class="kpi"><b>${itens.length}</b><span>notícias</span></div>
+      <div class="kpi"><b>${naoLidas}</b><span>não lidas</span></div>
+      <div class="kpi"><b>${mortes}</b><span>envolvendo morte</span></div>
+    </div>
+    ${top.length ? `<h3>Indicadores em destaque</h3><div id="resumo-ind">${top.map(([n, v]) => `<div class="barra" data-resumo-ind="${esc(n)}" title="Ver só estas notícias" role="button" tabindex="0"><span class="rot">${esc(n)}</span><span class="trilho"><i style="width:${(v / top[0][1]) * 100}%"></i></span><span class="val">${v}</span></div>`).join('')}</div>` : ''}
+    <p class="dica">Dica: use as setas ↑ ↓ (ou J e K) para passar de uma notícia para outra.</p>
+  </div>`;
+}
+
 function selecionar(id) {
   sel = id;
   lidos.add(id); guardar('lidos', [...lidos]);
-  document.querySelectorAll('#lista .post').forEach((p) => { p.classList.toggle('sel', p.dataset.id === id); if (p.dataset.id === id) p.classList.add('lido'); });
+  document.querySelectorAll('#lista .post').forEach((p) => {
+    const e = p.dataset.id === id;
+    p.classList.toggle('sel', e);
+    if (e) { p.classList.add('lido'); p.setAttribute('aria-current', 'true'); p.querySelector('.dot')?.remove(); p.querySelector('.l1 .sr')?.remove(); } else p.removeAttribute('aria-current');
+  });
   document.body.classList.add('lendo');
   renderLeitor(); menu();
 }
@@ -524,7 +639,8 @@ function mover(passo) {
   const k = itens.findIndex((i) => i.id === sel);
   const prox = itens[Math.min(itens.length - 1, Math.max(0, k + passo))];
   selecionar(prox.id);
-  document.querySelector('#lista .post.sel')?.scrollIntoView({ block: 'nearest' });
+  const el = document.querySelector('#lista .post.sel');
+  el?.scrollIntoView({ block: 'nearest' }); el?.focus({ preventScroll: true });
 }
 
 function badgeFiltros() {
@@ -534,34 +650,39 @@ function badgeFiltros() {
 
 function meta(n) {
   const quando = dados.atualizadoEm ? new Date(dados.atualizadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '–';
-  $('meta').textContent = `${n ?? visiveis(true).length} notícias · atualizado em ${quando}`;
+  $('meta').textContent = `${n ?? visiveis(true).length} notícias disponíveis · atualizado em ${quando}`;
 }
 
+const rotuloAtualizar = (t) => { $('atualizar').innerHTML = ico('refresh') + t; };
 async function carregar(forcar) {
-  $('atualizar').disabled = true; $('atualizar').textContent = 'Atualizando…';
+  $('atualizar').disabled = true; rotuloAtualizar('Atualizando…');
   try {
     if (forcar) await fetch('api/atualizar');
     dados = await (await fetch('data/noticias.json', { cache: 'no-cache' })).json();
     dados.itens.forEach((i) => { i.id = i.link; i.cats = i.cats || []; i.resumo = i.resumo || ''; }); // o link é o identificador
     arquivo = { meses: new Set(dados.arquivo || []), carregados: new Set(), promessas: {} };
     $('periodo').options[0].textContent = dados.arquivoDias ? 'Todo o período (1 ano)' : 'Todo o período';
-    montarEstados();
+    montarEstados(); montarGruposExportacao();
   } catch { $('meta').textContent = 'Dados indisponíveis'; }
   try { contagens = await (await fetch('data/contagens.json', { cache: 'no-cache' })).json(); } catch {}
-  $('atualizar').disabled = false; $('atualizar').textContent = 'Atualizar';
+  $('atualizar').disabled = false; rotuloAtualizar('Atualizar');
   lista();
   garantirArquivo();
 }
 
 $('menu').onclick = (e) => {
+  if (e.target.closest('#bfontes')) { fontesAbertas = !fontesAbertas; guardar('fontesAbertas', fontesAbertas); return menu(); }
   const el = e.target.closest('.item'); if (!el) return;
-  filtro = { tipo: el.dataset.tipo, valor: el.dataset.valor || null };
-  if (filtro.tipo === 'grupo') abertos.has(filtro.valor) ? abertos.delete(filtro.valor) : abertos.add(filtro.valor);
+  const { tipo, valor } = el.dataset;
+  if (tipo === 'analise') visao = 'analise';
+  else {
+    filtro = { tipo, valor: valor || null };
+    if (['todos', 'naolidos', 'favoritos'].includes(tipo)) visao = 'lista';
+  }
+  if (tipo === 'sgrupo' || tipo === 'grupo') abertos.has(valor) ? abertos.delete(valor) : abertos.add(valor);
   document.body.classList.remove('menu-aberto');
   lista();
 };
-$('aba-lista').onclick = () => { visao = 'lista'; lista(); };
-$('aba-analise').onclick = () => { visao = 'analise'; lista(); };
 $('analise').onclick = (e) => {
   const b = e.target.closest('[data-filtro]');
   if (!b) return;
@@ -604,13 +725,13 @@ function baixar(blob, ext) {
 $('csv').onclick = async () => {
   await garantirArquivo();
   const celula = (v) => `"${String(v).replace(/"/g, '""').replace(/\s+/g, ' ')}"`;
-  const linhas = noPeriodo().map((i) => CAMPOS.map((c) => celula(campo(i, c))).join(','));
+  const linhas = paraExportar().map((i) => CAMPOS.map((c) => celula(campo(i, c))).join(','));
   baixar(new Blob(['﻿' + [CAMPOS.map(nomeCampo).join(','), ...linhas].join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'csv'); // BOM: o Excel reconhece UTF-8
 };
 $('xlsx').onclick = async () => {
   await garantirArquivo();
   const larguras = { data: 20, fonte: 22, grupo: 18, titulo: 70, resumo: 50, link: 45, categorias: 28, indicadores: 36, coletadoEm: 20 };
-  const bytes = await gerarXlsx(CAMPOS.map(nomeCampo), noPeriodo().map((i) => CAMPOS.map((c) => campo(i, c))), CAMPOS.indexOf('link'), CAMPOS.map((c) => larguras[c] || 12));
+  const bytes = await gerarXlsx(CAMPOS.map(nomeCampo), paraExportar().map((i) => CAMPOS.map((c) => campo(i, c))), CAMPOS.indexOf('link'), CAMPOS.map((c) => larguras[c] || 12));
   baixar(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'xlsx');
 };
 $('relatorio').onclick = async () => {
@@ -619,7 +740,7 @@ $('relatorio').onclick = async () => {
   const de = $('de').value, ate = $('ate').value;
   const br = (d) => d.split('-').reverse().join('/');
   const periodo = de || ate ? `${de ? br(de) : 'início'} a ${ate ? br(ate) : 'hoje'}` : $('periodo').selectedOptions[0].textContent.trim();
-  const html = gerarRelatorio(noPeriodo(), { escopo: ufSel ? ufSel + ' (RJ)' : 'Estado do Rio de Janeiro', periodo, fontes: dados.status.filter((s) => s.ok).length, atualizadoEm: dados.atualizadoEm });
+  const html = gerarRelatorio(paraExportar(), { escopo: (ufSel ? ufSel + ' (RJ)' : 'Estado do Rio de Janeiro') + ($('expgrupo').value ? ' · ' + $('expgrupo').value : '') + ($('expind').value ? ' · ' + $('expind').value : ''), periodo, fontes: dados.status.filter((s) => s.ok).length, atualizadoEm: dados.atualizadoEm });
   if (!w) return alert('Permita pop-ups para abrir o relatório.');
   w.document.open(); w.document.write(html); w.document.close();
 };
@@ -638,27 +759,45 @@ $('leitor').onclick = (e) => {
   }
   const nl = e.target.closest('[data-naolido]');
   if (nl) { lidos.delete(nl.dataset.naolido); guardar('lidos', [...lidos]); return lista(); }
+  const cp = e.target.closest('[data-copiar]');
+  if (cp) { navigator.clipboard?.writeText(cp.dataset.copiar).then(() => { cp.querySelector('span').textContent = 'Link copiado'; }); return; }
+  const ri = e.target.closest('[data-resumo-ind]');
+  if (ri) { extra.ind = ri.dataset.resumoInd; return lista(); }
+  if (e.target.closest('#artmais')) { const p = $('partmenu'); const aberto = p.classList.toggle('aberto'); $('artmais').setAttribute('aria-expanded', aberto); return; }
   if (e.target.closest('#voltar')) document.body.classList.remove('lendo');
 };
 $('abrirmenu').onclick = (e) => { e.stopPropagation(); document.body.classList.toggle('menu-aberto'); };
+const POPS = [['pfiltros', 'bfiltros'], ['pmais', 'bmais']];
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#nav, #abrirmenu')) document.body.classList.remove('menu-aberto');
-  for (const [pop, btn] of [['pfiltros', 'bfiltros'], ['pexportar', 'bexportar']]) {
-    if (e.target.closest('#' + btn)) $(pop).classList.toggle('aberto');
-    else if (!e.target.closest('#' + pop) || e.target.closest('#pexportar button')) $(pop).classList.remove('aberto');
+  for (const [pop, btn] of POPS) {
+    const aberto = e.target.closest('#' + btn) ? $(pop).classList.toggle('aberto') : (!e.target.closest('#' + pop) || e.target.closest('#' + pop + ' .acao')) ? ($(pop).classList.remove('aberto'), false) : $(pop).classList.contains('aberto');
+    $(btn).setAttribute('aria-expanded', aberto);
   }
+  const pa = document.getElementById('partmenu');
+  if (pa && !e.target.closest('#partmenu, #artmais')) { pa.classList.remove('aberto'); $('artmais')?.setAttribute('aria-expanded', 'false'); }
 });
+$('leitor').addEventListener('keydown', (e) => {
+  const ri = e.target.closest?.('[data-resumo-ind]');
+  if (ri && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); extra.ind = ri.dataset.resumoInd; lista(); }
+});
+$('expind').innerHTML += INDICADORES.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
 $('indsel').innerHTML += INDICADORES.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
 $('indsel').onchange = () => { if ($('indsel').value) extra.ind = $('indsel').value; else delete extra.ind; lista(); };
 $('limpar').onclick = () => { delete extra.ind; $('periodo').value = '604800000'; $('de').value = ''; $('ate').value = ''; ufSel = ''; $('uf').value = ''; lista(); };
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { for (const [pop, btn] of POPS) { if ($(pop).classList.contains('aberto')) { $(pop).classList.remove('aberto'); $(btn).setAttribute('aria-expanded', 'false'); $(btn).focus(); } } return; }
   if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.metaKey || e.ctrlKey || visao !== 'lista') return;
   if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); mover(1); }
   else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); mover(-1); }
 });
-const aplicarTema = (t) => { document.documentElement.dataset.theme = t; $('tema').textContent = t === 'dark' ? '☀ Tema claro' : '☾ Tema escuro'; };
-aplicarTema(document.documentElement.dataset.theme || 'light');
+const aplicarTema = (t) => {
+  document.documentElement.dataset.theme = t;
+  $('tema').innerHTML = ico(t === 'dark' ? 'sun' : 'moon') + (t === 'dark' ? 'Tema claro' : 'Tema escuro');
+};
+aplicarTema(document.documentElement.dataset.theme || 'dark');
 $('tema').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; aplicarTema(t); guardar('tema', t); };
+rotuloAtualizar('Atualizar');
 renderLeitor();
 
 carregar(false);

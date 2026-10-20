@@ -223,7 +223,7 @@ const servidor = http.createServer((req, res) => {
     return atualizar().then(() => json(req, res, { atualizadoEm: cache.atualizadoEm }));
   }
   if (url.pathname === '/' || url.pathname === '/index.html') return estatico(res, 'index.html');
-  if (['/xlsx.js', '/relatorio.js', '/favicon.svg', '/apple-touch-icon.png', '/og-image.png'].includes(url.pathname)) return estatico(res, url.pathname.slice(1));
+  if (['/xlsx.js', '/relatorio.js', '/logo.png', '/favicon.png', '/favicon-32.png', '/apple-touch-icon.png', '/og-image.png'].includes(url.pathname)) return estatico(res, url.pathname.slice(1));
   res.writeHead(404).end('Não encontrado');
 });
 
