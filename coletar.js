@@ -8,7 +8,7 @@
 // --semente: importa um histórico local; as contagens saem de todo ele, as notícias de até 1 ano.
 const fs = require('fs');
 const path = require('path');
-const { buscarFeeds, analisar, feeds } = require('./server.js');
+const { buscarFeeds, analisar, feeds, ehSeguranca } = require('./server.js');
 const { DIAS_JANELA, ARQUIVO_DIAS, quando, bruto, saida, limiteJanela, limiteArquivo, mesDe, contar } = require('./dados.js');
 
 const dir = process.argv[2] || 'dados';
@@ -17,8 +17,12 @@ const iSemente = process.argv.indexOf('--semente');
 const lerJson = (arq, padrao) => { try { return JSON.parse(fs.readFileSync(arq, 'utf8')); } catch { return padrao; } };
 const gravar = (arq, obj) => { fs.writeFileSync(arq + '.tmp', JSON.stringify(obj)); fs.renameSync(arq + '.tmp', arq); };
 
+// Fontes gerais só valem pelo filtro de palavras-chave; reaplicá-lo aqui limpa também o que entrou com regras antigas
+const soSeguranca = new Set(feeds.filter((f) => f.filtrar).map((f) => f.id));
+
 // Classifica e aplica os mesmos descartes do servidor local
 async function classificar(brutos) {
+  brutos = brutos.filter((i) => !soSeguranca.has(i.fonteId) || ehSeguranca(i));
   const itens = brutos.sort((a, b) => quando(b).localeCompare(quando(a)));
   const analise = await analisar(itens);
   if (!analise) throw new Error('a análise (analise.py) falhou; nada foi publicado');

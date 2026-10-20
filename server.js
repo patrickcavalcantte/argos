@@ -31,10 +31,9 @@ const PALAVRAS = [
 ];
 
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const ehSeguranca = (item) => {
-  const t = ' ' + norm(item.titulo + ' ' + item.resumo) + ' ';
-  return PALAVRAS.some((p) => t.includes(p));
-};
+// A palavra precisa começar no início de uma palavra do texto ("presa" não vale dentro de "empresas")
+const PALAVRAS_RX = new RegExp('(?<![a-z0-9])(?:' + PALAVRAS.join('|') + ')');
+const ehSeguranca = (item) => PALAVRAS_RX.test(' ' + norm(item.titulo + ' ' + item.resumo) + ' ');
 
 const entidades = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 const decodificar = (s) =>
