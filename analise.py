@@ -325,6 +325,13 @@ def detectar_uf(titulo_orig, texto_orig, fallback):
     return fallback
 
 
+# "Golpe / fraude" é crime contra a vítima (golpe do Pix, estelionato, fraude em licitação). Fica de fora o que é só
+# negócio ("fraude contábil" em recuperação judicial) e "golpe" de luta ou esporte.
+ECONOMIA = re.compile(r"\b(recuperacao judicial|falencia|credores|balanco|mercado financeiro|bolsa de valores|investidores|resultado trimestral|lucro|prejuizo|acoes d[aoe]s?|fraudes? contabe\w*|escandalo contabil)\b")
+ESPORTE_LUTA = re.compile(r"\b(jiu-jitsu|jiu jitsu|mma|ufc|boxe|judo|karate|muay thai|lutador\w*|luta livre|campeonato|torneio)\b")
+GOLPE_POLITICO = re.compile(r"\b(trama golpista|tentativa de golpe|golpistas?|golpe de estado|golpe militar)\b")
+
+
 def classificar(item):
     titulo = item.get("titulo", "")
     resumo = item.get("resumo", "")
@@ -337,6 +344,10 @@ def classificar(item):
         cats.append("Prisão / operação")
     if POLITICA.search(baixo):
         cats = [c for c in cats if c not in ("Prisão / operação", "Violência policial")]
+    sem_golpe = False
+    if "Golpe / fraude" in cats and (ECONOMIA.search(baixo) or ESPORTE_LUTA.search(baixo) or GOLPE_POLITICO.search(baixo) or POLITICA.search(baixo)) and not CONTEXTO_POLICIAL.search(baixo):
+        cats.remove("Golpe / fraude")
+        sem_golpe = not cats  # era a única razão da notícia estar aqui
     arma = None
     morte = bool(MORTE_FORTE.search(efetivo))
     if morte or "Tiroteio / baleados" in cats:
@@ -344,7 +355,7 @@ def classificar(item):
             if rx.search(baixo):
                 arma = nome
                 break
-    politica = bool(POLITICA_FORTE.search(baixo)) and not (CATS_FATO & set(cats))
+    politica = (bool(POLITICA_FORTE.search(baixo)) and not (CATS_FATO & set(cats))) or sem_golpe
     exterior = eh_exterior(titulo, texto_orig)
     uf = None if exterior else detectar_uf(titulo, texto_orig, item.get("fonteUf"))
     mun = municipio_rj(titulo, resumo) if uf == "RJ" and not exterior else None
