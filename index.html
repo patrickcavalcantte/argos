@@ -117,6 +117,11 @@
   .post .fav { margin-left: auto; color: #e0a800; }
   .post .tit { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 15.5px; line-height: 1.4; font-weight: 600; }
   .post.lido .tit { font-weight: 400; color: var(--suave); }
+  #paginacao { display: none; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; padding: 10px 12px 14px; border-top: 1px solid var(--borda); background: var(--bg); }
+  #paginacao .info { flex-basis: 100%; text-align: center; color: var(--suave); font-size: 13px; }
+  #paginacao button { min-width: 40px; padding: 6px 10px; }
+  #paginacao button[aria-current="page"] { background: var(--acento-bg); border-color: var(--acento-bg); color: #fff; font-weight: 600; }
+  #paginacao .reticencias { color: var(--suave); padding: 0 2px; }
   .dia { padding: 8px 20px; color: var(--suave); font-size: 13px; }
   .vazio { padding: 40px 20px; color: var(--suave); text-align: center; }
   .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--sel); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 13px; }
@@ -268,6 +273,7 @@
     </div>
   </div>
   <div id="lista"></div>
+  <nav id="paginacao" aria-label="Páginas da lista de notícias"></nav>
   <div id="analise"></div>
 </section>
 <section id="leitor" aria-label="Leitura da notícia"></section>
@@ -294,6 +300,8 @@ let extra = {}; // { cat, uf, arma, ind } vindos dos gráficos
 let ufGrafico = '';
 let ufSel = ''; // filtro por município do RJ, vale para lista, análise e exportações
 let sel = null; // notícia aberta no leitor
+const POR_PAGINA = 10;
+let pagina = 1, chavePagina = '';
 
 const INDICADORES = ['Ações de policiamento', 'Ações e ataques criminais', 'Violência contra a mulher', 'Violência contra criança e adolescente', 'Vitimização de agente', 'Chacina e tentativa de chacina', 'Linchamento e tentativa de linchamento', 'Crimes e conflitos socioambientais', 'Violência étnico-racial, religiosa e LGBTIAfóbica'];
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -501,18 +509,21 @@ function lista() {
   $('indsel').value = extra.ind || '';
   $('titulo').textContent = tituloTela();
   badgeFiltros(); migalha();
+  $('paginacao').style.display = 'none';
   if (visao === 'analise') { analise(); menu(); return meta(); }
   const itens = paraLista();
   let html = '';
-  const LIMITE = 500;
-  for (const i of itens.slice(0, LIMITE)) {
+  const chave = JSON.stringify([filtro, termo, ufSel, extra, $('periodo').value, $('de').value, $('ate').value]);
+  if (chave !== chavePagina) { chavePagina = chave; pagina = 1; } // mudou o filtro: volta à primeira página
+  const paginas = Math.max(1, Math.ceil(itens.length / POR_PAGINA));
+  pagina = Math.min(Math.max(1, pagina), paginas);
+  for (const i of itens.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)) {
     const lida = lidos.has(i.id);
     html += `<button type="button" class="post ${lida ? 'lido' : ''} ${sel === i.id ? 'sel' : ''}" data-id="${esc(i.id)}" ${sel === i.id ? 'aria-current="true"' : ''}>
       <span class="l1">${lida ? '' : '<span class="dot" aria-hidden="true"></span><span class="sr">Não lida. </span>'}<span class="fonte">${esc(i.fonte)}</span><span>· ${relativo(i.data)}${i.mun ? ' · ' + esc(i.mun) : ''}</span>${favoritos.has(i.id) ? '<span class="fav" title="Favorita">★<span class="sr"> Favorita</span></span>' : ''}</span>
       <span class="tit">${esc(i.titulo)}</span>
     </button>`;
   }
-  if (itens.length > LIMITE) html += `<div class="vazio">Mostrando as ${LIMITE} mais recentes de ${itens.length}. Use a busca ou os filtros para refinar, ou exporte a planilha com tudo.</div>`;
   html = (Object.keys(extra).length ? `<div class="dia">Filtros: ${chips()}</div>` : '') + html;
   const inicio = dados.itens.reduce((m, i) => (i.data && i.data < m ? i.data : m), '9');
   const antigo = $('ate').value && inicio.slice(0, 10) > $('ate').value; // período anterior ao que ainda está no ar
@@ -522,9 +533,30 @@ function lista() {
     : 'Nenhuma notícia encontrada com esses filtros.';
   $('lista').innerHTML = html || `<div class="vazio">${vazio}</div>`;
   meta(itens.length);
+  paginacao(itens.length, paginas);
   menu();
   if (!sel || !itens.some((i) => i.id === sel)) renderLeitor(); // sem notícia aberta: painel de resumo; aberta e fora da lista: mantém o artigo
 }
+
+// Páginas de 10 notícias: "‹ Anterior 1 … 4 5 6 … 20 Próxima ›"
+function paginacao(total, paginas) {
+  const el = $('paginacao');
+  if (paginas <= 1) { el.style.display = 'none'; return; }
+  const mostrar = new Set([1, paginas, pagina - 1, pagina, pagina + 1].filter((n) => n >= 1 && n <= paginas));
+  const nums = [...mostrar].sort((a, b) => a - b);
+  let html = `<div class="info">Mostrando ${(pagina - 1) * POR_PAGINA + 1}–${Math.min(total, pagina * POR_PAGINA)} de ${total} notícias</div>`;
+  html += `<button type="button" data-pag="${pagina - 1}" ${pagina === 1 ? 'disabled' : ''} aria-label="Página anterior">‹ Anterior</button>`;
+  nums.forEach((n, k) => {
+    if (k && n - nums[k - 1] > 1) html += '<span class="reticencias" aria-hidden="true">…</span>';
+    html += `<button type="button" data-pag="${n}" aria-label="Página ${n}" ${n === pagina ? 'aria-current="page"' : ''}>${n}</button>`;
+  });
+  html += `<button type="button" data-pag="${pagina + 1}" ${pagina === paginas ? 'disabled' : ''} aria-label="Próxima página">Próxima ›</button>`;
+  el.innerHTML = html; el.style.display = 'flex';
+}
+$('paginacao').onclick = (e) => {
+  const b = e.target.closest('[data-pag]'); if (!b || b.disabled) return;
+  pagina = +b.dataset.pag; lista(); $('lista').scrollTop = 0;
+};
 
 // ---- Migalha de pão (Home › Notícias › …) e volta à home
 function migalha() {
@@ -634,10 +666,13 @@ function selecionar(id) {
 }
 
 function mover(passo) {
-  const itens = paraLista().slice(0, 500);
+  const itens = paraLista();
   if (!itens.length) return;
   const k = itens.findIndex((i) => i.id === sel);
-  const prox = itens[Math.min(itens.length - 1, Math.max(0, k + passo))];
+  const j = Math.min(itens.length - 1, Math.max(0, k + passo));
+  const prox = itens[j];
+  const alvo = Math.floor(j / POR_PAGINA) + 1;
+  if (alvo !== pagina) { pagina = alvo; sel = prox.id; lista(); } // a notícia seguinte está em outra página
   selecionar(prox.id);
   const el = document.querySelector('#lista .post.sel');
   el?.scrollIntoView({ block: 'nearest' }); el?.focus({ preventScroll: true });

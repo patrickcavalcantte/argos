@@ -6,7 +6,7 @@ Monitor de notícias de segurança pública no **estado do Rio de Janeiro** (cap
 
 ## O que ele faz
 
-- **Coleta** 57 fontes: grandes portais, mídia independente, 24 veículos regionais do estado do Rio de Janeiro (por região) e buscas no Google Notícias. Por enquanto, só entram as notícias que se referem ao RJ; as de outros estados são descartadas.
+- **Coleta** 53 fontes: grandes portais, mídia independente, 24 veículos regionais do estado do Rio de Janeiro (por região) e buscas no Google Notícias. Por enquanto, só entram as notícias que se referem ao RJ; as de outros estados são descartadas.
 - **Filtra** o que é segurança pública (por palavras-chave) e descarta política partidária e notícias do exterior.
 - **Classifica** cada notícia por tipo de crime, arma envolvida, município (92 do RJ), região do estado e se houve morte.
 - **Agrupa duplicatas:** várias matérias sobre o mesmo fato contam como um único caso.

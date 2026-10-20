@@ -9,42 +9,6 @@
     "google": true
   },
   {
-    "id": "g1-sp",
-    "nome": "g1 São Paulo",
-    "grupo": "Grandes portais",
-    "url": "https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fsp%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "filtrar": true,
-    "uf": "SP",
-    "google": true
-  },
-  {
-    "id": "g1-mg",
-    "nome": "g1 Minas Gerais",
-    "grupo": "Grandes portais",
-    "url": "https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fmg%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "filtrar": true,
-    "uf": "MG",
-    "google": true
-  },
-  {
-    "id": "g1-bahia",
-    "nome": "g1 Bahia",
-    "grupo": "Grandes portais",
-    "url": "https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fba%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "filtrar": true,
-    "uf": "BA",
-    "google": true
-  },
-  {
-    "id": "g1-pe",
-    "nome": "g1 Pernambuco",
-    "grupo": "Grandes portais",
-    "url": "https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fpe%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "filtrar": true,
-    "uf": "PE",
-    "google": true
-  },
-  {
     "id": "extra",
     "nome": "Extra",
     "grupo": "Grandes portais",
