@@ -24,7 +24,7 @@ async function classificar(brutos) {
   if (!analise) throw new Error('a análise (analise.py) falhou; nada foi publicado');
   return itens
     .map((i) => ({ ...i, ...analise.tags[i.id] }))
-    .filter((i) => !(i.grupo === 'Google Notícias' && !(i.cats && i.cats.length)) && !i.exterior && !i.politica && i.uf === 'RJ'); // escopo: só o estado do Rio de Janeiro
+    .filter((i) => !(i.grupo === 'Google Notícias' && !((i.cats && i.cats.length) || (i.ind && i.ind.length))) && !i.exterior && !i.politica && i.uf === 'RJ'); // escopo: só o estado do Rio de Janeiro
 }
 
 // Junta itens (já no formato de saída) aos arquivos mensais; ao final, apaga meses além de 1 ano

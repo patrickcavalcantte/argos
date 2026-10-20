@@ -4,7 +4,7 @@ const ARQUIVO_DIAS = 365; // notícias mais antigas ficam em arquivos por mês (
 
 const CAMPOS_BRUTOS = ['id', 'titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm'];
 // O link já serve de identificador, então 'id' não é publicado
-const CAMPOS_SAIDA = ['titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm', 'cats', 'arma', 'uf', 'regiao', 'mun', 'regiaoRJ', 'morte', 'dup', 'caso'];
+const CAMPOS_SAIDA = ['titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm', 'cats', 'ind', 'arma', 'uf', 'regiao', 'mun', 'regiaoRJ', 'morte', 'dup', 'caso'];
 
 const quando = (i) => i.data || i.coletadoEm || '';
 const bruto = (i) => Object.fromEntries(CAMPOS_BRUTOS.map((c) => [c, i[c] ?? null]));
@@ -21,12 +21,13 @@ function contar(itens) {
   const dias = {};
   for (const i of itens) {
     if (!i.data || i.dup) continue;
-    const d = (dias[i.data.slice(0, 10)] ??= { casos: 0, mortes: 0, mun: {}, cat: {}, arma: {} });
+    const d = (dias[i.data.slice(0, 10)] ??= { casos: 0, mortes: 0, mun: {}, cat: {}, ind: {}, arma: {} });
     const soma = (o, k) => { o[k] = (o[k] || 0) + 1; };
     d.casos++;
     if (i.morte) { d.mortes++; soma(d.arma, i.arma || 'Não informada'); }
     if (i.mun) soma(d.mun, i.mun);
     for (const c of i.cats || []) soma(d.cat, c);
+    for (const c of i.ind || []) soma(d.ind, c);
   }
   return dias;
 }

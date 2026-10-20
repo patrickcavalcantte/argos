@@ -19,9 +19,10 @@
   function gerarRelatorio(todas, op = {}) {
     const casos = todas.filter((i) => !i.dup);
     const mortes = casos.filter((i) => i.morte);
-    const cats = {}, armas = {}, regs = {}, dias = {}, fontes = {}, ufs = {};
+    const inds = {}, cats = {}, armas = {}, regs = {}, dias = {}, fontes = {}, ufs = {};
     for (const i of casos) {
       for (const c of i.cats || []) cats[c] = (cats[c] || 0) + 1;
+      for (const c of i.ind || []) inds[c] = (inds[c] || 0) + 1;
       regs[i.regiaoRJ || 'Região não identificada'] = (regs[i.regiaoRJ || 'Região não identificada'] || 0) + 1;
       if (i.mun) ufs[i.mun] = (ufs[i.mun] || 0) + 1;
       if (i.data) { const d = i.data.slice(0, 10); dias[d] = (dias[d] || 0) + 1; }
@@ -44,7 +45,7 @@
     if (picoDia) resumo.push(`O dia de maior volume foi <b>${dataBr(picoDia[0] + 'T12:00')}</b>, com ${num(picoDia[1])} casos.`);
 
     const LIM_MORTES = 300, LIM_CASOS = 400;
-    const linha = (i) => `<tr><td class="nw">${dataBr(i.data)}</td><td>${esc(i.mun || i.regiaoRJ || '—')}</td><td><a href="${esc(seguro(i.link))}">${esc(i.titulo)}</a></td><td>${esc(i.fonte || '')}</td><td>${esc((i.cats || []).join('; '))}</td></tr>`;
+    const linha = (i) => `<tr><td class="nw">${dataBr(i.data)}</td><td>${esc(i.mun || i.regiaoRJ || '—')}</td><td><a href="${esc(seguro(i.link))}">${esc(i.titulo)}</a></td><td>${esc(i.fonte || '')}</td><td>${esc([...(i.ind || []), ...(i.cats || [])].join('; '))}</td></tr>`;
     const porData = (a, b) => (b.data || '').localeCompare(a.data || '');
     const cabecalho = '<thead><tr><th>Data</th><th>Local</th><th>Notícia</th><th>Fonte</th><th>Tipo</th></tr></thead>';
     const outros = casos.filter((i) => !i.morte).sort(porData);
@@ -109,6 +110,7 @@ ${casos.length ? `<ul class="resumo">${resumo.map((r) => `<li>${r}</li>`).join('
 
 <h2>2. Panorama</h2>
 <div class="duas">
+  <div><b>Casos por indicador</b><div class="nota">Um caso pode entrar em mais de um indicador.</div>${barras(Object.entries(inds).sort((a, b) => b[1] - a[1]), 9)}</div>
   <div><b>Casos por tipo de ocorrência</b><div class="nota">Um caso pode ter mais de um tipo.</div>${barras(ord(cats), 12)}</div>
   <div><b>Mortes por meio utilizado</b><div class="nota">Conforme descrito no texto da notícia.</div>${barras(ord(armas), 8)}</div>
   <div><b>Casos por região do estado</b>${barras(ord(regs), 10)}</div>

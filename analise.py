@@ -59,6 +59,91 @@ ARMAS = [
 ARMAS = [(n, re.compile(p)) for n, p in ARMAS]
 CATEGORIAS_RE = {n: re.compile(p) for n, p in CATEGORIAS.items()}
 
+# ---------- Indicadores de monitoramento (uma notícia pode ter mais de um) ----------
+IND_POLICIAMENTO = "Ações de policiamento"
+IND_ATAQUES = "Ações e ataques criminais"
+IND_MULHER = "Violência contra a mulher"
+IND_CRIANCA = "Violência contra criança e adolescente"
+IND_AGENTE = "Vitimização de agente"
+IND_CHACINA = "Chacina e tentativa de chacina"
+IND_LINCHAMENTO = "Linchamento e tentativa de linchamento"
+IND_SOCIOAMBIENTAL = "Crimes e conflitos socioambientais"
+IND_DISCRIMINACAO = "Violência étnico-racial, religiosa e LGBTIAfóbica"
+INDICADORES = [IND_POLICIAMENTO, IND_ATAQUES, IND_MULHER, IND_CRIANCA, IND_AGENTE, IND_CHACINA, IND_LINCHAMENTO, IND_SOCIOAMBIENTAL, IND_DISCRIMINACAO]
+
+_QTD = r"(?:dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|[2-9]|\d{2,})"
+_MULHER_TERMO = r"(?:mulher|mulheres|esposa|companheira|namorada|ex-namorada|ex-companheira|ex-mulher|ex-esposa|gestante|idosa)"
+_CRIANCA_TERMO = r"(?:crianca\w*|bebe\w*|recem-nascid\w*|menino\w*|menina\w*|adolescente\w*|menor(?:es)? de idade|garoto\w*|garota\w*|infantil)"
+_AGENTE_TERMO = r"(?:policia(?:l|is)\w*|pm|pms|soldado|sargento|cabo(?! frio)|tenente|capitao|agente\w*|inspetor\w*|delegad[oa]|guardas? municipa\w+|bombeir\w*|pf|prf)"
+
+_RX = {
+    IND_POLICIAMENTO: re.compile(
+        r"\b(preso|presa|presos|presas|prisao|prisoes|prende\w*|mandados? de (prisao|busca)|flagrante|foragid\w*|apreend\w*|apreensao|detid\w*|capturad\w*|"
+        r"intervencao policial|confronto com a (pm|policia)|morto em confronto|morre em confronto|troca de tiros com (a )?(pm|policia|policiais)|"
+        r"operacao policial|operacao da (pf|policia)|(pm|policia|policiais)\w* (prend|apreend|abord|detiv|captur|cumpr|deflagr)\w*|deflagr\w*)\b"),
+    IND_ATAQUES: re.compile(
+        r"\b(faccao|faccoes|faccionad\w*|milicia\w*|miliciano\w*|comando vermelho|terceiro comando|tcp|ada|pcc|crime organizado|quadrilha\w*|bando|grupo armado|"
+        r"guerra entre|disputa (de|por) (territorio|pontos?)|toque de recolher|arrastao|ataques? (de|dos|por) (criminosos|traficantes|bandidos|faccionados)|"
+        r"(onibus|veiculos|carros) incendiados|ataques? a (bases?|delegacias?|viaturas?|upp)|criminosos armados|bandidos armados)\b"),
+    IND_CHACINA: re.compile(
+        r"\b(chacina\w*|duplo homicidio|triplo homicidio|quadruplo homicidio|" + _QTD + r" (pessoas )?(mortos|mortas|morrem|morreram|vitimas fatais|assassinados|assassinadas)|"
+        r"(um|uma|1) (morto|morta|morte) e " + _QTD + r" (feridos|feridas|baleados|baleadas)|(mortos|mortas|morrem|morre|morreu) e " + _QTD + r" (feridos|feridas|baleados|baleadas))\b"),
+    IND_LINCHAMENTO: re.compile(
+        r"\b(linch\w*|justica com as proprias maos|(espancad\w*|agredid\w*) (por|pela|pelos|pelas) (populares|multidao|moradores|vizinhos)|"
+        r"(populares|multidao|moradores) (agrid\w*|espanc\w*|amarr\w*))\b"),
+    IND_SOCIOAMBIENTAL: re.compile(
+        r"\b(desmatament\w*|garimp\w*|mineracao ilegal|queimadas?|crimes? ambienta\w+|ibama|icmbio|grilagem|grileiros?|conflitos? (agrario|agrarios|fundiario|fundiarios|por terra|de terra|socioambienta\w+)|"
+        r"sem[- ]terra|mst|quilombol\w*|indigena\w*|terras? indigenas?|ribeirinh\w*|assentamento\w*|reintegracao de posse|trabalho escravo|trabalho analogo a escravidao|"
+        r"poluicao|derramamento de (oleo|petroleo)|rompimento de barragem|lixao|loteamento\w* irregula\w+|construcoes? irregula\w+ em area|area de preservacao|"
+        r"unidade de conservacao|parque (nacional|estadual|municipal)|mata atlantica|manguezal|restinga|pesca (ilegal|predatoria)|caca ilegal|trafico de animais|animais silvestres|fauna silvestre|extracao ilegal)\b"),
+    IND_DISCRIMINACAO: re.compile(
+        r"\b(racis\w*|injuria racial|discriminacao (racial|religiosa|por orientacao)|preconceito racial|xenofob\w*|antissemit\w*|nazis\w*|neonazis\w*|supremacis\w*|"
+        r"intolerancia religiosa|racismo religioso|terreiro\w*|candomble|umbanda|lgbt\w*|homofob\w*|transfob\w*|lesbofob\w*|bifob\w*|travesti\w*|transexua\w+|transgener\w*|"
+        r"pessoas? trans|mulher(es)? trans|homens? trans|gays?|lesbicas?|crimes? de odio|crime motivado por odio)\b"),
+}
+_MULHER_DIRETO = re.compile(r"\b(feminicid\w*|violencia domestica|violencia contra (a )?mulher\w*|maria da penha|medida protetiva|contra (a )?mulher(es)?|violencia de genero|estupr\w*|importunacao sexual|misoginia|agressao a mulher)\b")
+_MULHER_VITIMA = re.compile(r"\b" + _MULHER_TERMO + r"\b(?:\W+\w+){0,4}?\W+(morta|assassinada|esfaqueada|agredida|espancada|baleada|atacada|estrangulada|queimada|morre|morreu|mata|violentada)\b")
+_MULHER_AGRESSOR = re.compile(r"\b(matou|mata|esfaqueou|agrediu|espancou|atirou em|estrangulou|queimou|assassinou)\b(?:\W+\w+){0,3}?\W+" + _MULHER_TERMO + r"\b")
+_CRIANCA_VIOLENCIA = r"(morta|morto|morre\w*|assassinad\w*|balead\w*|bala perdida|esfaquead\w*|agredid\w*|espancad\w*|estupr\w*|abus\w*|maus-tratos|sequestrad\w*|atropelad\w*|vitima|violencia|torturad\w*|queimad\w*|afogad\w*|desaparecid\w*|ferid\w*|atingid\w*)"
+_CRIANCA_VITIMA = re.compile(r"\b" + _CRIANCA_TERMO + r"\b(?:\W+\w+){0,6}?\W+" + _CRIANCA_VIOLENCIA + r"\b")
+_CRIANCA_VITIMA_INV = re.compile(r"\b" + _CRIANCA_VIOLENCIA + r"\b(?:\W+\w+){0,4}?\W+(?:de|da|do|contra|a|ao|em)\W+(?:\w+\W+){0,2}" + _CRIANCA_TERMO + r"\b")
+_CRIANCA_DIRETO = re.compile(r"\b(estupro de vulneravel|abuso sexual (infantil|de (crianca|menor))|pedofil\w*|violencia (infantil|contra (a )?crianca\w*)|maus-tratos a (crianca|menor)|exploracao sexual|trabalho infantil)\b")
+_AGENTE_RX = re.compile(r"\b" + _AGENTE_TERMO + r"\b")
+_AGENTE_VITIMA = re.compile(r"\b(morto|morta|mortos|morre\w*|assassinad\w*|balead\w*|ferid\w*|atingid\w*|atacad\w*|esfaquead\w*|emboscad\w*|executad\w*|sequestrad\w*|agredid\w*)\b")
+_AGENTE_BLOQ = re.compile(r"\b(prende\w*|prend\w+|mata\w*|atira\w*|apreend\w*|socorr\w*|captur\w*|detem|persegu\w*|resgat\w*|suspeit\w*|bandid\w*|criminos\w*|traficante\w*|ladr\w+|assaltante\w*|homem|jovem|motorista|acusad\w*|denunciad\w*)\b")
+_AGENTE_INV = re.compile(r"\b(morte|mortes|ataque|ataques|emboscada|atentado|tiros contra|disparos contra)\b(?:\W+\w+){0,3}?\W+(?:de|a|contra|aos?|dos?)\W+(?:\w+\W+){0,2}" + _AGENTE_TERMO + r"\b")
+_FERIDOS = re.compile(r"\b" + _QTD + r" (pessoas )?(baleadas|baleados|feridos|feridas)\b")
+
+
+_ACIDENTE = re.compile(r"\b(acidente\w*|capotamento|colisao|queda de (helicoptero|aviao|aeronave)|atropelamento)\b")
+
+
+def _vitimizacao_agente(baixo):
+    for m in _AGENTE_RX.finditer(baixo):
+        resto = baixo[m.end():m.end() + 70]
+        mv = _AGENTE_VITIMA.search(resto)
+        if mv:
+            gap = resto[:mv.start()]
+            if len(gap.split()) <= 4 and not _AGENTE_BLOQ.search(gap):
+                return True
+    return bool(_AGENTE_INV.search(baixo))
+
+
+def indicadores(baixo, morte):
+    """Indicadores de monitoramento que o texto (sem acento, minúsculo) sugere; uma notícia pode ter vários."""
+    achou = {n for n, rx in _RX.items() if rx.search(baixo)}
+    if not achou & {IND_CHACINA} and morte and _FERIDOS.search(baixo):
+        achou.add(IND_CHACINA)  # pelo menos uma morte e duas pessoas feridas no mesmo fato
+    if _MULHER_DIRETO.search(baixo) or _MULHER_VITIMA.search(baixo) or _MULHER_AGRESSOR.search(baixo):
+        achou.add(IND_MULHER)
+    if _CRIANCA_DIRETO.search(baixo) or _CRIANCA_VITIMA.search(baixo) or _CRIANCA_VITIMA_INV.search(baixo):
+        achou.add(IND_CRIANCA)
+    if _vitimizacao_agente(baixo):
+        achou.add(IND_AGENTE)
+    if _ACIDENTE.search(baixo):  # acidente não é ataque nem chacina
+        achou -= {IND_CHACINA, IND_AGENTE}
+    return [n for n in INDICADORES if n in achou]
+
 # ---------- Regiões ----------
 UF_NOME = {
     "AC": "Acre", "AL": "Alagoas", "AP": "Amapá", "AM": "Amazonas", "BA": "Bahia", "CE": "Ceará",
@@ -263,7 +348,8 @@ def classificar(item):
     exterior = eh_exterior(titulo, texto_orig)
     uf = None if exterior else detectar_uf(titulo, texto_orig, item.get("fonteUf"))
     mun = municipio_rj(titulo, resumo) if uf == "RJ" and not exterior else None
-    return {"cats": cats, "arma": arma, "uf": uf, "regiao": UF_REGIAO.get(uf), "mun": mun, "regiaoRJ": MUN_REGIAO_RJ.get(mun), "morte": morte, "exterior": exterior, "politica": politica}
+    ind = [] if (exterior or politica) else indicadores(baixo, morte)
+    return {"cats": cats, "ind": ind, "arma": arma, "uf": uf, "regiao": UF_REGIAO.get(uf), "mun": mun, "regiaoRJ": MUN_REGIAO_RJ.get(mun), "morte": morte, "exterior": exterior, "politica": politica}
 
 
 STOP = set("de da do das dos em no na nos nas por para com sem sob sobre apos ate que como mais mas uma uns umas ele ela eles elas foi sao ser ter tem pode vai um o a e os as ao aos pela pelo suspeito suspeita homem mulher policia civil militar preso presos presa apos diz".split())

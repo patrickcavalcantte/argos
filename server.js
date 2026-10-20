@@ -24,7 +24,10 @@ const PALAVRAS = [
   'seguranca publica', 'secretaria de seguranca', 'penitenciaria', 'presidio', 'sistema prisional', 'fuga de presos',
   'maria da penha', 'medida protetiva', 'violencia domestica', 'contra a mulher', 'lesao corporal',
   'chacina', 'refem', 'rebelia', 'homicida', 'criminos', 'crime', 'suspeito', 'vitima', 'habeas corpus',
-  'golpe', 'estelionato', 'fraude', 'corrupcao'
+  'golpe', 'estelionato', 'fraude', 'corrupcao',
+  // indicadores: linchamento, discriminação, socioambiental, violência contra criança
+  'linch', 'racis', 'injuria racial', 'homofob', 'transfob', 'lgbt', 'intolerancia religiosa', 'desmatament', 'garimp', 'grilagem',
+  'crime ambiental', 'conflito agrario', 'conflito fundiario', 'trabalho escravo', 'abuso sexual', 'maus-tratos', 'pedofil'
 ];
 
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
