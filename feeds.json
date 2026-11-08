@@ -420,5 +420,65 @@
     "googleSite": "g1.globo.com/rj/rio-de-janeiro",
     "filtrar": true,
     "uf": "RJ"
+  },
+  {
+    "id": "loc-cachambi",
+    "nome": "Cachambi · notícias",
+    "grupo": "Locais · Cachambi, Méier e Queimados",
+    "url": "https://news.google.com/rss/search?q=Cachambi%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "uf": "RJ",
+    "google": true,
+    "local": "Cachambi"
+  },
+  {
+    "id": "loc-cachambi-infra",
+    "nome": "Cachambi · infraestrutura",
+    "grupo": "Locais · Cachambi, Méier e Queimados",
+    "url": "https://news.google.com/rss/search?q=Cachambi%20%28luz%20OR%20%C3%A1gua%20OR%20acidente%20OR%20sem%C3%A1foro%20OR%20chuva%20OR%20alagamento%20OR%20tr%C3%A2nsito%20OR%20obras%29%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "uf": "RJ",
+    "google": true,
+    "local": "Cachambi"
+  },
+  {
+    "id": "loc-meier",
+    "nome": "Méier · notícias",
+    "grupo": "Locais · Cachambi, Méier e Queimados",
+    "url": "https://news.google.com/rss/search?q=M%C3%A9ier%20OR%20Meier%20Rio%20de%20Janeiro%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "uf": "RJ",
+    "google": true,
+    "local": "Méier"
+  },
+  {
+    "id": "loc-meier-infra",
+    "nome": "Méier · infraestrutura",
+    "grupo": "Locais · Cachambi, Méier e Queimados",
+    "url": "https://news.google.com/rss/search?q=%28M%C3%A9ier%20OR%20Meier%29%20Rio%20%28luz%20OR%20%C3%A1gua%20OR%20acidente%20OR%20sem%C3%A1foro%20OR%20chuva%20OR%20alagamento%20OR%20tr%C3%A2nsito%20OR%20obras%20OR%20trem%29%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "uf": "RJ",
+    "google": true,
+    "local": "Méier"
+  },
+  {
+    "id": "loc-queimados",
+    "nome": "Queimados · notícias",
+    "grupo": "Locais · Cachambi, Méier e Queimados",
+    "url": "https://news.google.com/rss/search?q=Queimados%20RJ%20Baixada%20Fluminense%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "uf": "RJ",
+    "google": true,
+    "local": "Queimados"
+  },
+  {
+    "id": "loc-queimados-infra",
+    "nome": "Queimados · infraestrutura",
+    "grupo": "Locais · Cachambi, Méier e Queimados",
+    "url": "https://news.google.com/rss/search?q=Queimados%20RJ%20%28luz%20OR%20%C3%A1gua%20OR%20acidente%20OR%20sem%C3%A1foro%20OR%20chuva%20OR%20alagamento%20OR%20tr%C3%A2nsito%20OR%20obras%20OR%20trem%29%20when%3A2d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "filtrar": false,
+    "uf": "RJ",
+    "google": true,
+    "local": "Queimados"
   }
 ]

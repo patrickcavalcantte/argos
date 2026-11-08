@@ -4,7 +4,7 @@ const ARQUIVO_DIAS = 365; // notícias mais antigas ficam em arquivos por mês (
 
 const CAMPOS_BRUTOS = ['id', 'titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm'];
 // O link já serve de identificador, então 'id' não é publicado
-const CAMPOS_SAIDA = ['titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm', 'cats', 'ind', 'arma', 'uf', 'regiao', 'mun', 'regiaoRJ', 'morte', 'dup', 'caso'];
+const CAMPOS_SAIDA = ['titulo', 'link', 'resumo', 'data', 'fonte', 'fonteId', 'grupo', 'fonteUf', 'coletadoEm', 'cats', 'ind', 'arma', 'uf', 'regiao', 'mun', 'regiaoRJ', 'locais', 'infra', 'morte', 'dup', 'caso'];
 
 const quando = (i) => i.data || i.coletadoEm || '';
 const bruto = (i) => Object.fromEntries(CAMPOS_BRUTOS.map((c) => [c, i[c] ?? null]));
@@ -16,11 +16,13 @@ const limiteArquivo = () => limite(ARQUIVO_DIAS);
 const naJanela = (itens) => { const lim = limiteJanela(); return itens.filter((i) => quando(i) >= lim); };
 const mesDe = (i) => quando(i).slice(0, 7);
 
+const soLocal = (i) => i.locais && i.locais.length && !(i.cats && i.cats.length) && !(i.ind && i.ind.length);
+
 // Contagens por dia de publicação. Conta casos distintos (sem duplicatas), como o painel de análise.
 function contar(itens) {
   const dias = {};
   for (const i of itens) {
-    if (!i.data || i.dup) continue;
+    if (!i.data || i.dup || soLocal(i)) continue; // notícia de bairro sem crime não entra nas contagens de segurança
     const d = (dias[i.data.slice(0, 10)] ??= { casos: 0, mortes: 0, mun: {}, cat: {}, ind: {}, arma: {} });
     const soma = (o, k) => { o[k] = (o[k] || 0) + 1; };
     d.casos++;
@@ -39,4 +41,4 @@ function consultaGoogle(f) {
 }
 const urlGoogle = (termo) => `https://news.google.com/rss/search?q=${encodeURIComponent(termo)}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
 
-module.exports = { DIAS_JANELA, ARQUIVO_DIAS, CAMPOS_BRUTOS, quando, bruto, saida, limiteJanela, limiteArquivo, naJanela, mesDe, contar, consultaGoogle, urlGoogle };
+module.exports = { soLocal, DIAS_JANELA, ARQUIVO_DIAS, CAMPOS_BRUTOS, quando, bruto, saida, limiteJanela, limiteArquivo, naJanela, mesDe, contar, consultaGoogle, urlGoogle };

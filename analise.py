@@ -332,6 +332,28 @@ ESPORTE_LUTA = re.compile(r"\b(jiu-jitsu|jiu jitsu|mma|ufc|boxe|judo|karate|muay
 GOLPE_POLITICO = re.compile(r"\b(trama golpista|tentativa de golpe|golpistas?|golpe de estado|golpe militar)\b")
 
 
+# ---------- Locais monitorados (qualquer notícia, não só segurança) e temas de infraestrutura ----------
+# Texto ORIGINAL (com maiúsculas): "queimados" minúsculo costuma ser gente queimada, não a cidade.
+LOCAIS = [
+    ("Cachambi", re.compile(r"\bCachambi\b", re.I)),
+    ("Méier", re.compile(r"\b(?:M[ée]ier|Meier)\b")),
+    ("Queimados", re.compile(r"Queimados(?!\s+(?:graves|por|em))")),
+]
+INFRA = [
+    ("Falta de luz", r"\b(falta de (luz|energia)|sem (luz|energia)|apagao|queda de energia|blecaute|energia eletrica|poste\w* cai\w*|fios? (caido|solto|partido)\w*|rede eletrica|iluminacao publica|escuridao)\b"),
+    ("Falta de água", r"\b(falta d.?agua|sem agua|desabastecimento|cedae|rio\+saneamento|vazamento|adutora|rompimento de (adutora|tubulacao|cano)|abastecimento de agua|agua suja|esgoto)\b"),
+    ("Acidente", r"\b(acidente\w*|colisao|capotamento|atropel\w*|engavetamento|batida|colidiu|choque entre)\b"),
+    ("Trânsito e vias", r"\b(semaforo\w*|sinal (quebrado|apagado|de transito)|sinais? (de transito )?(quebrados?|apagados?)|sinaliza\w*|transito|engarrafamento|interdit\w*|buraco\w*|cratera|asfalto|pavimenta\w*|obras?|via\b|rua\b|avenida|viaduto|ponte)\b"),
+    ("Transporte", r"\b(supervia|trem|trens|ramal|metro|brt|onibus|vlt|estacao|greve de (onibus|rodoviarios|ferroviarios))\b"),
+    ("Tempestade e alagamento", r"\b(tempestade\w*|temporal|temporais|chuva\w*|alagament\w*|alagad\w*|enchente\w*|inunda\w*|deslizamento\w*|ventania|ventos? fortes?|alerta (de|do|da)\b|defesa civil|ciclone|granizo|raios?|estagio de (crise|atencao|mobilizacao)|centro de operacoes|\bcor rio\b|previsao do tempo|frente fria|calor extremo|onda de calor)\b"),
+]
+INFRA = [(n, re.compile(p)) for n, p in INFRA]
+
+
+def locais_do_texto(texto_orig):
+    return [n for n, rx in LOCAIS if rx.search(texto_orig)]
+
+
 def classificar(item):
     titulo = item.get("titulo", "")
     resumo = item.get("resumo", "")
@@ -357,10 +379,19 @@ def classificar(item):
                 break
     politica = (bool(POLITICA_FORTE.search(baixo)) and not (CATS_FATO & set(cats))) or sem_golpe
     exterior = eh_exterior(titulo, texto_orig)
+    locais = locais_do_texto(texto_orig)
+    if item.get("fonteLocal") and item["fonteLocal"] not in locais:  # busca dedicada ao local: vale mesmo sem o nome no título
+        locais.append(item["fonteLocal"])
+    infra = [n for n, rx in INFRA if rx.search(baixo)] if locais else []
     uf = None if exterior else detectar_uf(titulo, texto_orig, item.get("fonteUf"))
+    if locais:  # bairro/cidade monitorados: sempre RJ e nunca descartados como política ou exterior
+        politica = exterior = False
+        uf = "RJ"
     mun = municipio_rj(titulo, resumo) if uf == "RJ" and not exterior else None
+    if locais and not mun:
+        mun = "Queimados" if locais[0] == "Queimados" else "Rio de Janeiro"
     ind = [] if (exterior or politica) else indicadores(baixo, morte)
-    return {"cats": cats, "ind": ind, "arma": arma, "uf": uf, "regiao": UF_REGIAO.get(uf), "mun": mun, "regiaoRJ": MUN_REGIAO_RJ.get(mun), "morte": morte, "exterior": exterior, "politica": politica}
+    return {"cats": cats, "ind": ind, "arma": arma, "uf": uf, "regiao": UF_REGIAO.get(uf), "mun": mun, "regiaoRJ": MUN_REGIAO_RJ.get(mun), "morte": morte, "exterior": exterior, "politica": politica, "locais": locais, "infra": infra}
 
 
 STOP = set("de da do das dos em no na nos nas por para com sem sob sobre apos ate que como mais mas uma uns umas ele ela eles elas foi sao ser ter tem pode vai um o a e os as ao aos pela pelo suspeito suspeita homem mulher policia civil militar preso presos presa apos diz".split())

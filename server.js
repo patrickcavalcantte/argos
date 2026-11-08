@@ -33,7 +33,11 @@ const PALAVRAS = [
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 // A palavra precisa começar no início de uma palavra do texto ("presa" não vale dentro de "empresas")
 const PALAVRAS_RX = new RegExp('(?<![a-z0-9])(?:' + PALAVRAS.join('|') + ')');
-const ehSeguranca = (item) => PALAVRAS_RX.test(' ' + norm(item.titulo + ' ' + item.resumo) + ' ');
+// Locais monitorados (Cachambi, Méier, Queimados): notícias deles valem sobre qualquer assunto, não só segurança
+const LOCAL_RX = /(?<![a-z])(?:cachambi|meier)(?![a-z])/;
+const ehLocal = (item) => LOCAL_RX.test(norm(item.titulo + ' ' + item.resumo)) || /Queimados/.test(item.titulo + ' ' + item.resumo);
+const ehSeguranca = (item) => PALAVRAS_RX.test(' ' + norm(item.titulo + ' ' + item.resumo) + ' ') || ehLocal(item);
+const fonteLocal = Object.fromEntries(feeds.filter((f) => f.local).map((f) => [f.id, f.local]));
 
 const entidades = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 const decodificar = (s) =>
@@ -112,7 +116,7 @@ function analisar(itens) {
       if (codigo !== 0) { console.log('  análise falhou:', erro.trim().split('\n').pop()); return resolve(null); }
       try { resolve(JSON.parse(saida)); } catch { resolve(null); }
     });
-    py.stdin.end(JSON.stringify({ itens }));
+    py.stdin.end(JSON.stringify({ itens: itens.map((i) => (fonteLocal[i.fonteId] ? { ...i, fonteLocal: fonteLocal[i.fonteId] } : i)) }));
   });
 }
 
@@ -179,7 +183,7 @@ async function atualizar() {
   if (analise) {
     for (const i of itens) Object.assign(i, analise.tags[i.id]);
     // Buscas do Google trazem ruído: sem nenhum tipo de crime reconhecido, não é segurança pública
-    for (const i of itens) if (i.grupo === 'Google Notícias' && !(i.cats && i.cats.length)) historico.delete(i.id);
+    for (const i of itens) if (i.grupo === 'Google Notícias' && !(i.cats && i.cats.length) && !(i.locais && i.locais.length)) historico.delete(i.id);
     // Fora do escopo (fora do RJ, exterior ou política partidária): fica no histórico, mas não aparece nem é exportado
     itens = itens.filter((i) => historico.has(i.id) && !i.exterior && !i.politica && i.uf === 'RJ');
   }
