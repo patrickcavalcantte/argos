@@ -337,7 +337,7 @@ GOLPE_POLITICO = re.compile(r"\b(trama golpista|tentativa de golpe|golpistas?|go
 LOCAIS = [
     ("Cachambi", re.compile(r"\bCachambi\b", re.I)),
     ("Méier", re.compile(r"\b(?:M[ée]ier|Meier)\b")),
-    ("Queimados", re.compile(r"Queimados(?!\s+(?:graves|por|em))")),
+    ("Queimados", re.compile(r"\bQueimados\b(?!\s+(?:graves|por|em)\b)")),
 ]
 INFRA = [
     ("Falta de luz", r"\b(falta de (luz|energia)|sem (luz|energia)|apagao|queda de energia|blecaute|energia eletrica|poste\w* cai\w*|fios? (caido|solto|partido)\w*|rede eletrica|iluminacao publica|escuridao)\b"),
