@@ -2,7 +2,7 @@ name: Coletar e publicar
 
 on:
   schedule:
-    - cron: '0 9 * * *' # todo dia às 06h (Brasília)
+    - cron: '7 * * * *' # a cada hora (minuto 7, evita o pico do início da hora)
   workflow_dispatch: # botão "Run workflow" na aba Actions
 
 permissions:

@@ -18,7 +18,7 @@ Monitor de notícias de segurança pública no **estado do Rio de Janeiro** (cap
 ## Como funciona online
 
 ```
-GitHub Actions (todo dia, 06h Brasília)
+GitHub Actions (a cada hora)
    └─ coletar.js ── busca os feeds ── analise.py (classifica) ──┐
                                                                 ▼
                         branch gh-pages: noticias.json + contagens.json
@@ -26,7 +26,7 @@ GitHub Actions (todo dia, 06h Brasília)
                           GitHub Pages ── index.html lê os JSON
 ```
 
-- O workflow `.github/workflows/coletar.yml` roda uma vez por dia (e manualmente, em **Actions → Coletar e publicar → Run workflow**).
+- O workflow `.github/workflows/coletar.yml` roda a cada hora (e manualmente, em **Actions → Coletar e publicar → Run workflow**).
 - As notícias dos **últimos 30 dias** ficam em `data/noticias.json`, que o painel carrega direto. As mais antigas, **até 1 ano**, ficam em arquivos por mês (`data/arquivo/AAAA-MM.json`), baixados só quando você escolhe um período mais antigo ou "Todo o período". Depois de 1 ano, só sobram as contagens.
 - As **contagens diárias** (casos, mortes e totais por município, tipo de crime e arma) são acumuladas sem limite, mesmo depois que as notícias saem do ar (`data/contagens.json`). Elas alimentam o gráfico "Casos por mês" da aba Análise.
 - A branch `gh-pages` recebe sempre um único commit, sobrescrito a cada coleta, então o repositório não cresce.
@@ -69,7 +69,7 @@ Alguns sites bloqueiam os IPs de datacenter do GitHub (erro 403). Nesse caso a f
 
 1. Faça um fork do repositório.
 2. Em **Settings → Pages**, escolha a branch `gh-pages` (pasta `/`). Ela é criada na primeira execução do workflow.
-3. Em **Actions**, rode **Coletar e publicar** uma vez. Dali em diante ele roda sozinho todo dia.
+3. Em **Actions**, rode **Coletar e publicar** uma vez. Dali em diante ele roda sozinho a cada hora.
 
 Para começar com histórico, rode `node coletar.js <pasta>/data --semente historico.json` e publique a pasta na `gh-pages` (as notícias da semente entram pelos últimos 30 dias e pelo arquivo de até 1 ano; as contagens, por todo o período).
 
@@ -93,5 +93,5 @@ Para começar com histórico, rode `node coletar.js <pasta>/data --semente histo
 
 - A classificação é feita por **palavras-chave** sobre título e resumo. É uma estimativa, **não estatística oficial**: pode errar o tipo de crime, o estado ou a existência de morte.
 - Notícias que não citam o município ficam de fora do recorte municipal (mas contam no estado, quando vêm de veículo do RJ).
-- O RSS dos portais mostra só as notícias mais recentes. Com coleta diária, um portal que publica muito pode ter itens que passam sem ser coletados.
+- O RSS dos portais mostra só as notícias mais recentes. Com coleta de hora em hora, um portal que publica muito pode ter itens que passam sem ser coletados.
 - O conteúdo das notícias pertence aos veículos de origem. O Argos guarda apenas título, resumo curto e link, e o painel leva o leitor à matéria original.
